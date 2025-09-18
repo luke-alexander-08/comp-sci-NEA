@@ -1,0 +1,63 @@
+import pygame_widgets
+import pygame
+from pygame_widgets.slider import Slider
+from pygame_widgets.textbox import TextBox
+
+# pygame.init()
+# win = pygame.display.set_mode((1000, 600))
+
+
+class LabeledSlider():
+    def __init__(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key, label_fontsize=30):
+        self.slider = Slider(screen, x, y, slider_width, slider_height, min=slider_min, max=slider_max, step=slider_step)
+        self.label = TextBox(screen, x, y-label_fontsize*2, slider_width, label_fontsize+10, fontSize=label_fontsize, borderThickness=0, colour=(255,255,255), initial=0) # postition the label above the slider
+        self.label_text = label_text
+        self.value_box = TextBox(screen, x, y+label_fontsize*2, slider_width, label_fontsize+20, fontSize=label_fontsize, borderThickness=1, onSubmit=self.on_text_submit)
+        self.label.setText(label_text)
+        self.label.disable()
+        self.key=key
+
+    def on_text_submit(self):
+        print("Called")
+        val = self.value_box.getText()
+        self.slider.setValue(float(val))
+
+
+    def update(self):
+        if not self.value_box.selected: # allows for discrete value selection
+            self.value_box.setText(str(round(self.slider.getValue(), 2)))
+        
+        return self.slider.getValue()
+
+
+
+
+
+
+
+# slider_var= 15
+
+# labelledslide = LabeledSlider(win, 100,500,800,40,0,99,1,"test")
+# slider = Slider(win, 100, 100, 800, 40, min=0, max=99, step=1)
+# output = TextBox(win, 475, 200, 100, 50, fontSize=30)
+
+# output.disable()  # Act as label instead of textbox
+
+# run = True
+# while run:
+#     events = pygame.event.get()
+#     for event in events:
+#         if event.type == pygame.QUIT:
+#             pygame.quit()
+#             run = False
+#             quit()
+
+#     win.fill((255, 255, 255))
+
+#     output.setText(str(slider.getValue()))
+#     slider_var = labelledslide.update()
+     
+#     pygame_widgets.update(events)
+#     pygame.display.update()
+
+#     print(slider_var)
