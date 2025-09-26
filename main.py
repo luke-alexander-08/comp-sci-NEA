@@ -2,9 +2,13 @@ from perlinNoise import perlin
 import matplotlib.pyplot as plt
 import pygame
 from slider import LabeledSlider
+from menus import Menu
+
 import pygame_widgets
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
+
+
 
 import numpy as np
 # best way to implement this into pygame. 
@@ -24,7 +28,8 @@ import numpy as np
 #
 
 
-# menu class to display widgets
+
+
 # initialise pygame and constants
 pygame.init()
 WIDTH = 1024
@@ -45,64 +50,77 @@ clock = pygame.time.Clock()
 FPS = 60
 
 
-class Menu():
-    def __init__(self, screen, x, y):
-        self.sliders = []
-        self.buttons = []
-        self.screen = screen
-        self.values_dict = {}
-        self.x = x
-        self.y = y
-    
-    def add_slider(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key):
-        self.sliders.append(LabeledSlider(screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key=key, label_fontsize=15))
 
-    def add_button(self, screen, x, y, width, height, text):
-        params = self.values_dict.values()
-        self.buttons.append(Button(screen, x, y, width, height, text=text, onClick=self.on_button_click))  
-
-    def on_button_click(self):
-        params = self.values_dict
-        print(self.values_dict)
-        global rgb_array # is using a global variable bad practice? can get around this? 
-
-        rgb_array,noise_map = generate_rgb_map(
-            perlin_width,
-            perlin_height, 
-            octaves= params["octaves"], 
-            frequency=params["frequency"], 
-            amplitude=params["amplitude"], 
-            persistence=params["persistence"], 
-            lacunarity=params["lacunarity"], 
-            SEED= 0, 
-            blue_bound=params["blue_boundary"], 
-            green_bound=params["green_boundary"])
-        
-
-    def update(self):
-        for obj in self.sliders:
-            self.values_dict[obj.key] = obj.update() # store slider values in self dictionary. uses key identifier
-
-
-
-
-
-def generate_rgb_map(perlin_width=perlin_width, perlin_height=perlin_height, octaves= 1, frequency= 1, amplitude= 1, persistence=0.5, lacunarity= 2, SEED= 0, blue_bound=-0.15, green_bound=0.3):
-    print(locals())
+def generate_perlin_map(perlin_width=perlin_width, perlin_height=perlin_height, octaves= 1, frequency= 1, amplitude= 1, persistence=0.5, lacunarity= 2, SEED= 0): # default values
     noise_map = perlin(perlin_width,perlin_height,octaves, frequency, amplitude, persistence, lacunarity, SEED)
+    return noise_map
+
+def rgb_perlin_mask(noise_map, blue_bound=-0.15, green_bound=0.3):
+    print(locals())
+    global perlin_width, perlin_height
     rgb_array = np.zeros((perlin_width,perlin_height,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
     # boolean array indexing, masks perlin values to colour
-
     rgb_array[(noise_map >= -1) & (noise_map < blue_bound)] = (0,0,255) # blue masking
     rgb_array[(noise_map >= blue_bound) & (noise_map < green_bound)] = (0,255,0) # green masking
     rgb_array[(noise_map >= green_bound) & (noise_map <= 1.0)] = (190,190,190) # gray masking
 
+    return rgb_array # returns an array of rgb values, and the originally generated perlin noise map. 
+
+def gen_map_in_class():
+    params = generation_menu.get_params()
+
+    noise_map = generate_perlin_map(
+        perlin_width,
+        perlin_height, 
+        octaves= params["octaves"], 
+        frequency=params["frequency"], 
+        amplitude=params["amplitude"], 
+        persistence=params["persistence"], 
+        lacunarity=params["lacunarity"], 
+        SEED= 0)
+    
+    global rgb_array
+
+    rgb_array = rgb_perlin_mask(noise_map,
+        blue_bound=params["blue_boundary"], 
+        green_bound=params["green_boundary"])  
+    
+    
 
 
-    return rgb_array,noise_map # returns an array of rgb values, and the originally generated perlin noise map. 
+# class GenerationMenu(Menu): # menu class override to set click function
+#     def on_button_click(self):
+#         params = self.values_dict
+#         print(self.values_dict)
+#         global rgb_array # is using a global variable bad practice? can get around this? 
+
+#         noise_map = generate_perlin_map(
+#             perlin_width,
+#             perlin_height, 
+#             octaves= params["octaves"], 
+#             frequency=params["frequency"], 
+#             amplitude=params["amplitude"], 
+#             persistence=params["persistence"], 
+#             lacunarity=params["lacunarity"], 
+#             SEED= 0)
+        
+#         rgb_array = rgb_perlin_mask(noise_map,
+#             blue_bound=params["blue_boundary"], 
+#             green_bound=params["green_boundary"])
+
+
+def test1():
+    print("BEAST")
+
+def test2():
+    print("MODE")
 
 
 #test
+test_welcome = Menu(screen, 0, 0)
+test_welcome.add_button(screen=screen, x= 50, y= 100, height=30, width=100, text="MODE", passed_func=test1)
+test_welcome.add_button(screen=screen, x= 200, y= 100, height=30, width=100, text="BEAST", passed_func=test2)
+
 
 
 # initialise settings menu
@@ -115,13 +133,14 @@ generation_menu.add_slider(screen=screen, x=550, y=430, slider_width=MENU_WIDTH,
 generation_menu.add_slider(screen=screen, x=20, y=550, slider_width=100, slider_height=15, slider_min=-1.0, slider_max=1, slider_step=0.01, label_text="Blue Noise Boundary", key="blue_boundary")
 generation_menu.add_slider(screen=screen, x=20, y=650, slider_width=100, slider_height=15, slider_min=-1.0, slider_max=1, slider_step=0.01, label_text="Green Noise Boundary", key="green_boundary")
 
-generation_menu.add_button(screen=screen, x=550, y=530, width = 100, height = 30, text= "Generate")
+generation_menu.add_button(screen=screen, x=550, y=530, width = 100, height = 30, text= "Generate", passed_func=gen_map_in_class)
 
 
 map_surf = pygame.Surface((perlin_width, perlin_height)) # map surface
-rgb_array,noise_map = generate_rgb_map()
+noise_map  = generate_perlin_map()
+rgb_array = rgb_perlin_mask(noise_map)
 
-# noise_map = perlin(perlin_width,perlin_height,frequency=4, octaves=6, SEED=2) # np array
+noise_map = perlin(perlin_width,perlin_height,frequency=4, octaves=6, SEED=2) # np array
 
 
 #run loop
@@ -151,4 +170,4 @@ while running:
 
 
 
-print(slider_vars)
+# print(slider_vars)
