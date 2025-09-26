@@ -17,8 +17,9 @@ import numpy as np
 # perhaps make the noise map generated the same size as the default pygame window 
 
 #todo
+# 
 #ocean depth colouring, same with mountains etc.
-#pickle to store object as file
+#
 #
 #
 
@@ -28,9 +29,16 @@ import numpy as np
 pygame.init()
 WIDTH = 1024
 HEIGHT = 756
-perlin_width = 1024
-perlin_height = 756
+perlin_width = 512
+perlin_height = 512
 MENU_WIDTH = 256
+
+windows = {"menu":True,        # have windows be displayed depending on whether they are active or not. 
+            "import":False, 
+            "generation":False,
+            "view_map":False, 
+            "help":False} 
+
 
 screen = pygame.display.set_mode((WIDTH+MENU_WIDTH, HEIGHT), flags=pygame.RESIZABLE)
 clock = pygame.time.Clock()
@@ -91,10 +99,10 @@ def generate_rgb_map(perlin_width=perlin_width, perlin_height=perlin_height, oct
 
 
 
-    return rgb_array,noise_map
+    return rgb_array,noise_map # returns an array of rgb values, and the originally generated perlin noise map. 
 
 
-
+#test
 
 
 # initialise settings menu
@@ -135,7 +143,7 @@ while running:
     pygame.surfarray.blit_array(map_surf, rgb_array)
     screen.blit(map_surf, (0,0))
 
-    slider_vars = perlin_settings.update()
+    slider_vars = generation_menu.update()
     pygame_widgets.update(events)
 
     pygame.display.flip()
