@@ -10,7 +10,7 @@ from pygame_widgets.textbox import TextBox
 class LabeledSlider():
     def __init__(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key, label_fontsize=30):
         self.slider = Slider(screen, x, y, slider_width, slider_height, min=slider_min, max=slider_max, step=slider_step)
-        self.label = TextBox(screen, x, y-label_fontsize*2, slider_width, label_fontsize+10, fontSize=label_fontsize, borderThickness=0, colour=(255,255,255), initial=0) # postition the label above the slider
+        self.label = TextBox(screen, x, y-label_fontsize*2, 1000, label_fontsize+10, fontSize=label_fontsize, borderThickness=0, colour=(255,255,255), initial=0) # postition the label above the slider
         self.label_text = label_text
         self.value_box = TextBox(screen, x, y+label_fontsize*2, slider_width, label_fontsize+20, fontSize=label_fontsize, borderThickness=1, onSubmit=self.on_text_submit)
         self.label.setText(label_text)
@@ -21,6 +21,25 @@ class LabeledSlider():
         print("Called")
         val = self.value_box.getText()
         self.slider.setValue(float(val))
+
+    def hide(self):
+        self.slider.hide()
+        self.label.hide()
+        self.value_box.hide()
+
+    def disable(self):
+        self.slider.disable()
+        self.value_box.disable()
+
+    def show(self):
+        self.slider.show()
+        self.label.show()
+        self.value_box.show()
+
+    def enable(self):
+        self.slider.enable()
+        self.value_box.enable()
+
 
 
     def update(self):

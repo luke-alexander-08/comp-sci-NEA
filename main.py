@@ -23,9 +23,7 @@ import numpy as np
 #todo
 # 
 #ocean depth colouring, same with mountains etc.
-#
-#
-#
+
 
 
 
@@ -38,6 +36,9 @@ perlin_width = 512
 perlin_height = 512
 MENU_WIDTH = 256
 
+
+
+
 windows = {"menu":True,        # have windows be displayed depending on whether they are active or not. 
             "import":False, 
             "generation":False,
@@ -48,7 +49,6 @@ windows = {"menu":True,        # have windows be displayed depending on whether 
 screen = pygame.display.set_mode((WIDTH+MENU_WIDTH, HEIGHT), flags=pygame.RESIZABLE)
 clock = pygame.time.Clock()
 FPS = 60
-
 
 
 def generate_perlin_map(perlin_width=perlin_width, perlin_height=perlin_height, octaves= 1, frequency= 1, amplitude= 1, persistence=0.5, lacunarity= 2, SEED= 0): # default values
@@ -86,40 +86,17 @@ def gen_map_in_class():
         green_bound=params["green_boundary"])  
     
     
+# def test1():
+#     print("BEAST")
+
+# def test2():
+#     print("MODE")
 
 
-# class GenerationMenu(Menu): # menu class override to set click function
-#     def on_button_click(self):
-#         params = self.values_dict
-#         print(self.values_dict)
-#         global rgb_array # is using a global variable bad practice? can get around this? 
-
-#         noise_map = generate_perlin_map(
-#             perlin_width,
-#             perlin_height, 
-#             octaves= params["octaves"], 
-#             frequency=params["frequency"], 
-#             amplitude=params["amplitude"], 
-#             persistence=params["persistence"], 
-#             lacunarity=params["lacunarity"], 
-#             SEED= 0)
-        
-#         rgb_array = rgb_perlin_mask(noise_map,
-#             blue_bound=params["blue_boundary"], 
-#             green_bound=params["green_boundary"])
-
-
-def test1():
-    print("BEAST")
-
-def test2():
-    print("MODE")
-
-
-#test
-test_welcome = Menu(screen, 0, 0)
-test_welcome.add_button(screen=screen, x= 50, y= 100, height=30, width=100, text="MODE", passed_func=test1)
-test_welcome.add_button(screen=screen, x= 200, y= 100, height=30, width=100, text="BEAST", passed_func=test2)
+# #test
+# test_welcome = Menu(screen, 0, 0)
+# test_welcome.add_button(screen=screen, x= 50, y= 100, height=30, width=100, text="MODE", passed_func=test1)
+# test_welcome.add_button(screen=screen, x= 200, y= 100, height=30, width=100, text="BEAST", passed_func=test2)
 
 
 
@@ -141,6 +118,10 @@ noise_map  = generate_perlin_map()
 rgb_array = rgb_perlin_mask(noise_map)
 
 noise_map = perlin(perlin_width,perlin_height,frequency=4, octaves=6, SEED=2) # np array
+
+# 12/10/2025 - currently at the point of implementing screens. need to create a welcome menu screen and implement true/false switching within the program class. then work on page nav & adding a perlin function into the program classs. 
+
+
 
 
 #run loop
