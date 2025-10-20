@@ -7,7 +7,7 @@ from menus import Menu, GenerationMenu, WelcomeMenu, HelpMenu, MapMenu, ImportMe
 import pygame_widgets
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
-from perlin_mapping import noise_map_to_biome_map, rules
+
 
 
 import numpy as np
@@ -89,10 +89,6 @@ class Program():
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     print(pos)
-                    try:
-                        print(rules.biomes[self.array_ids[pos[0], pos[1]]])
-                    except:
-                        pass
 
             self.current_window.show_self()
             self.current_window.update()
@@ -133,11 +129,7 @@ class Program():
             lacunarity=params["lacunarity"],
             SEED= 0)
 
-        self.new_convert_noise_to_map(altitude_map=self.noise_map, 
-                                      temperature_map=perlin(self.perlin_width, self.perlin_height, octaves=8, frequency=2, amplitude=2, persistence=0.75, lacunarity=2.5),
-                                      moisture_map=perlin(self.perlin_width, self.perlin_height, octaves=8, frequency=8, amplitude=2, persistence=0.75, lacunarity=2.5))
-
-        # self.convert_noise_to_map(params["blue_boundary"], params["green_boundary"]) # keeping noise map conversion as a separate function so that the conversion can be rewritten to use biome mapping at a later date. 
+        self.convert_noise_to_map(params["blue_boundary"], params["green_boundary"]) # keeping noise map conversion as a separate function so that the conversion can be rewritten to use biome mapping at a later date. 
 
     def convert_noise_to_map(self, blue_bound, green_bound):
         self.map_array = np.zeros((perlin_width,perlin_height,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
@@ -148,15 +140,6 @@ class Program():
 
         self.windows["MAP"].set_map(self.map_array) # set the array to the map attribute in the map menu class. 
 
-    def new_convert_noise_to_map(self, altitude_map, temperature_map, moisture_map):
-        # normalise
-        altitude_map = (altitude_map+1) /2
-        temperature_map = (temperature_map+1) /2
-        moisture_map = (moisture_map+1) /2
-
-        self.map_array, self.array_ids = noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, self.perlin_width, self.perlin_height)
-
-        self.windows["MAP"].set_map(self.map_array)
 
 
 pmain = Program()
