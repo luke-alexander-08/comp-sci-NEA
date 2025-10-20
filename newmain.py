@@ -33,133 +33,131 @@ MENU_WIDTH = 256
 
 
 class Program():
-    def __init__(self, screen):
-        self.screen = screen
-        
+    def __init__(self):        
         self.WIDTH = 1024
         self.HEIGHT = 756
         self.perlin_width = 512
         self.perlin_height = 512
         self.MENU_WIDTH = 256
 
-        self.current_window = WelcomeMenu(screen,0,0, self.screen_change)
-        self.windows = {        # have windows be displayed depedning on activity                  # give windows an "on" and an "off" attribute.        
+        self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT), flags=pygame.RESIZABLE)
+        self.screen.fill((255,255,255))
 
-            "WELCOME": self.current_window,
-            "GENERATION": GenerationMenu(screen, 0,0, self.MENU_WIDTH, None),
-            "IMPORT": ImportMenu(screen, 0,0),
-            "HELP": HelpMenu(screen, 0,0),
-            "MAP": MapMenu(screen, 0,0)
-        } 
-        
-        for val in self.windows.values():
-            val.hide_self()
-
-
-        self.running = True
+        self.noise_map = np.zeros
+        self.map_array = np.zeros((perlin_width,perlin_height,3), dtype=np.uint8)
 
         #pygame variables
         self.events = pygame.event.get()
         self.clock = pygame.time.Clock()
         self.FPS = 60
 
-        print(self.current_window)
+        self.current_window = WelcomeMenu(self.screen,0,0, self.WIDTH, self.HEIGHT, self.screen_change, self.go_back_screen)
+        self.window_stack = [] # manage navigating back through windows
+        self.windows = {        # have windows be displayed depedning on activity                  # give windows an "on" and an "off" attribute.        
+
+            "WELCOME": self.current_window,
+            "GENERATION": GenerationMenu(self.screen, 0,0,self.WIDTH, self.HEIGHT, self.MENU_WIDTH, self.screen_change, self.go_back_screen, self.gen_map),
+            "IMPORT": ImportMenu(self.screen, 0,0, self.WIDTH, self.HEIGHT, self.screen_change, self.go_back_screen),
+            "HELP": HelpMenu(self.screen, 0,0, self.WIDTH, self.HEIGHT, self.screen_change, self.go_back_screen),
+            "MAP": MapMenu(self.screen, 0,0, self.WIDTH, self.HEIGHT, self.screen_change, self.go_back_screen, self.map_array, self.perlin_width, self.perlin_height)
+        } 
+        
+        self.window_stack.append(self.current_window.get_ID())
+
+
+
+        # self.current_window = self.windows["GENERATION"]
+        self.current_window.show_self()
+
+        for val in self.windows.values():
+            val.hide_self()
+
+        self.running = True
+
+        print(self.current_window.get_ID())
 
 
     def run(self):
-        if self.run:
+        if self.run:            
+            self.screen.fill((255,255,255))
+
             self.events = pygame.event.get()
-
-            self.current_window.show_self()
-
             for event in self.events:
                 if event.type == pygame.QUIT:
-                            self.run = False
+                    self.running = False
+                    print("End")
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     print(pos)
-                    try:
-                        print(noise_map[pos[0]][pos[1]])
-                    except:
-                        pass
 
+            self.current_window.show_self()
+            self.current_window.update()
 
-            self.screen.fill((255,255,255))
             pygame_widgets.update(self.events)
-            
             pygame.display.flip()
             self.clock.tick(self.FPS)   
     
-    def test(self):
-        print("Test")
-
-
     def screen_change(self, key):
-        self.current_window.hide_self()
+        self.current_window.hide_self()   
         self.current_window = self.windows[key]
+        self.current_window.show_self()
 
+        self.window_stack.append(self.current_window.get_ID())
+        print(self.window_stack)
+        print(f"Now showing {self.current_window.get_ID()} screen")
         print(self.windows)
 
+    def go_back_screen(self):
+        if len(self.window_stack) > 1:
+            self.current_window.hide_self()
+            self.window_stack.pop()
+            self.current_window = self.windows[self.window_stack[-1]] # get last screen in stack list
+            self.current_window.show_self()
+        else:
+            print("Stack Empty")
+
+    def gen_map(self, params):
+        print("Gen map! ")
+        print(params)
+        self.noise_map = perlin(
+            self.perlin_width,
+            self.perlin_height,
+            octaves= params["octaves"],
+            frequency=params["frequency"],
+            amplitude=params["amplitude"],
+            persistence=params["persistence"],
+            lacunarity=params["lacunarity"],
+            SEED= 0)
+
+        self.convert_noise_to_map(params["blue_boundary"], params["green_boundary"]) # keeping noise map conversion as a separate function so that the conversion can be rewritten to use biome mapping at a later date. 
+
+    def convert_noise_to_map(self, blue_bound, green_bound):
+        self.map_array = np.zeros((perlin_width,perlin_height,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
+        # boolean array indexing, masks perlin values to colour
+        self.map_array[(self.noise_map >= -1) & (self.noise_map < blue_bound)] = (0,0,255) # blue masking
+        self.map_array[(self.noise_map >= blue_bound) & (self.noise_map < green_bound)] = (0,255,0) # green masking
+        self.map_array[(self.noise_map >= green_bound) & (self.noise_map <= 1.0)] = (190,190,190) # gray masking
+
+        self.windows["MAP"].set_map(self.map_array) # set the array to the map attribute in the map menu class. 
 
 
-screen = pygame.display.set_mode((WIDTH+MENU_WIDTH, HEIGHT), flags=pygame.RESIZABLE)
-clock = pygame.time.Clock()
-FPS = 60
 
-
-
-def generate_perlin_map(perlin_width=perlin_width, perlin_height=perlin_height, octaves= 1, frequency= 1, amplitude= 1, persistence=0.5, lacunarity= 2, SEED= 0): # default values
-    noise_map = perlin(perlin_width,perlin_height,octaves, frequency, amplitude, persistence, lacunarity, SEED)
-    return noise_map
-
-def rgb_perlin_mask(noise_map, blue_bound=-0.15, green_bound=0.3):
-    print(locals())
-    global perlin_width, perlin_height
-    rgb_array = np.zeros((perlin_width,perlin_height,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
-    # boolean array indexing, masks perlin values to colour
-    rgb_array[(noise_map >= -1) & (noise_map < blue_bound)] = (0,0,255) # blue masking
-    rgb_array[(noise_map >= blue_bound) & (noise_map < green_bound)] = (0,255,0) # green masking
-    rgb_array[(noise_map >= green_bound) & (noise_map <= 1.0)] = (190,190,190) # gray masking
-
-    return rgb_array # returns an array of rgb values, and the originally generated perlin noise map. 
-
-# def gen_map_in_class():
-#     params = generation_menu.get_params()
-
-#     noise_map = generate_perlin_map(
-#         perlin_width,
-#         perlin_height, 
-#         octaves= params["octaves"], 
-#         frequency=params["frequency"], 
-#         amplitude=params["amplitude"], 
-#         persistence=params["persistence"], 
-#         lacunarity=params["lacunarity"], 
-#         SEED= 0)
-    
-#     global rgb_array
-
-#     rgb_array = rgb_perlin_mask(noise_map,
-#         blue_bound=params["blue_boundary"], 
-#         green_bound=params["green_boundary"])  
-    
-
-map_surf = pygame.Surface((perlin_width, perlin_height)) # map surface
-noise_map  = generate_perlin_map()
-rgb_array = rgb_perlin_mask(noise_map)
-
-noise_map = perlin(perlin_width,perlin_height,frequency=4, octaves=6, SEED=2) # np array
-
-
-pmain = Program(screen)
+pmain = Program()
 
 
 # 12/10/2025 - currently at the point of implementing screens. need to create a welcome menu screen and implement true/false switching within the program class. then work on page nav & adding a perlin function into the program classs. 
-
+# 17/10/2025 - sorted screen functionality, can move back and forth use buttons etc. Next step is to work on layering multiple maps generated. 
 #run loop
-running = True
-while running:
+while pmain.running:
     pmain.run()
 
 
 
-# print(slider_vars)
+
+plt.figure(figsize=(10,8))
+plt.imshow(pmain.noise_map, cmap="viridis", origin="lower", vmin=-1.0, vmax=1.0)
+plt.colorbar(label='Noise Value')
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.title("Fractal Noise attempt")
+plt.show()

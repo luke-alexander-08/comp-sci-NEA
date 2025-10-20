@@ -21,7 +21,6 @@ def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5,
     for _ in range(octaves):
         print(f"Octave: {_}")
         x, y = np.mgrid[0:width, 0:height]
-        
         scaled_x = x / width * frequency
         scaled_y = y/ height * frequency 
 

@@ -10,7 +10,7 @@ from pygame_widgets.textbox import TextBox
 class LabeledSlider():
     def __init__(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key, label_fontsize=30):
         self.slider = Slider(screen, x, y, slider_width, slider_height, min=slider_min, max=slider_max, step=slider_step)
-        self.label = TextBox(screen, x, y-label_fontsize*2, 1000, label_fontsize+10, fontSize=label_fontsize, borderThickness=0, colour=(255,255,255), initial=0) # postition the label above the slider
+        self.label = TextBox(screen, x, y-label_fontsize*2, 100, label_fontsize+10, fontSize=label_fontsize, borderThickness=0, colour=(255,255,255), initial=0) # postition the label above the slider
         self.label_text = label_text
         self.value_box = TextBox(screen, x, y+label_fontsize*2, slider_width, label_fontsize+20, fontSize=label_fontsize, borderThickness=1, onSubmit=self.on_text_submit)
         self.label.setText(label_text)
@@ -27,10 +27,6 @@ class LabeledSlider():
         self.label.hide()
         self.value_box.hide()
 
-    def disable(self):
-        self.slider.disable()
-        self.value_box.disable()
-
     def show(self):
         self.slider.show()
         self.label.show()
@@ -39,12 +35,16 @@ class LabeledSlider():
     def enable(self):
         self.slider.enable()
         self.value_box.enable()
+        # print("Enabled")
 
-
+    def disable(self):
+        self.slider.disable()
+        self.value_box.disable()
 
     def update(self):
         if not self.value_box.selected: # allows for discrete value selection
-            self.value_box.setText(str(round(self.slider.getValue(), 2)))
+            self.value_box.setText(str(round(self.slider.getValue(), 2)))  
+            # print("slider update. ")
         
         return self.slider.getValue()
 

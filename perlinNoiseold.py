@@ -11,7 +11,7 @@ def hash_func(ix, iy): # hash function using large primes
     return (ix * 1836311903 ^ iy * 2971215073) & 0xffffffff
 
 def get_gradient(ix,iy):
-    return gradients[hash_func(ix,iy) % 7]  # indexed from 0,7
+    return gradients[hash_func(ix,iy) % 8]  # indexed from 0,7
 
 def dot_product(v1, v2):
     return (v1[0] * v2[0]) + (v1[1] * v2[1])   # finds dot product between two vectors
