@@ -16,13 +16,16 @@ def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5,
     np.random.shuffle(perm_table)
     perm_table = np.stack([perm_table, perm_table]).flatten() # duplicate elements of the table, then turns it one dimensional using flatten(). apparently therefore making it more efficient to perform operations, as no need for modulo fucntion. 
 
-    total_noise = np.zeros((width, height))
-    max_amplitude = 0   
+    total_noise = np.zeros((height, width)) # numpy default is rows by cols 
+    max_amplitude = 0           
+    x, y = np.meshgrid(np.arange(width, dtype=float), np.arange(height, dtype=float))
+    
+    x /= width
+    y /= height
     for _ in range(octaves):
         print(f"Octave: {_}")
-        x, y = np.mgrid[0:width, 0:height]
-        scaled_x = x / width * frequency
-        scaled_y = y/ height * frequency 
+        scaled_x = x * frequency
+        scaled_y = y* frequency 
 
         xi = scaled_x.astype(int) # cast numpy array to integer parts. 
         xf = scaled_x - xi # get fraction parts

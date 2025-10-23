@@ -8,9 +8,10 @@ from pygame_widgets.textbox import TextBox
 
 
 class LabeledSlider():
-    def __init__(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key, label_fontsize=30):
-        self.slider = Slider(screen, x, y, slider_width, slider_height, min=slider_min, max=slider_max, step=slider_step)
-        self.label = TextBox(screen, x, y-label_fontsize*2, 100, label_fontsize+10, fontSize=label_fontsize, borderThickness=0, colour=(255,255,255), initial=0) # postition the label above the slider
+    def __init__(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key, label_fontsize=30, initial=0):
+        print(initial, "intiial")
+        self.slider = Slider(screen, x, y, slider_width, slider_height, min=slider_min, max=slider_max, step=slider_step, initial=initial)
+        self.label = TextBox(screen, x, y-label_fontsize*2, 100, label_fontsize+10, fontSize=label_fontsize, borderThickness=0, colour=(255,255,255)) # postition the label above the slider
         self.label_text = label_text
         self.value_box = TextBox(screen, x, y+label_fontsize*2, slider_width, label_fontsize+20, fontSize=label_fontsize, borderThickness=1, onSubmit=self.on_text_submit)
         self.label.setText(label_text)

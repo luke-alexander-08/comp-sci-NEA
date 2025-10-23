@@ -2,12 +2,12 @@ from perlinNoise import perlin
 import matplotlib.pyplot as plt
 import pygame
 from slider import LabeledSlider
-from menus import Menu
+from menus import Menu, GenerationMenu, WelcomeMenu, HelpMenu, MapMenu, ImportMenu
 
 import pygame_widgets
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
-
+from perlin_mapping import noise_map_to_biome_map, rules
 
 
 import numpy as np
@@ -21,12 +21,7 @@ import numpy as np
 # perhaps make the noise map generated the same size as the default pygame window 
 
 #todo
-# 
 #ocean depth colouring, same with mountains etc.
-
-
-
-
 
 # initialise pygame and constants
 pygame.init()
@@ -37,118 +32,190 @@ perlin_height = 512
 MENU_WIDTH = 256
 
 
+class Program():
+    def __init__(self):        
+        self.WIDTH = 1024
+        self.HEIGHT = 756
+        self.perlin_width = 1024
+        self.perlin_height = 512
+        self.MENU_WIDTH = 256
+
+        self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT), flags=pygame.RESIZABLE)
+        self.screen.fill((255,255,255))
+
+        self.noise_map = np.zeros
+        self.map_array = np.zeros((perlin_width,perlin_height,3), dtype=np.uint8)
+
+        #pygame variables
+        self.events = pygame.event.get()
+        self.clock = pygame.time.Clock()
+        self.FPS = 60
+
+        self.current_window = WelcomeMenu(self.screen,0,0, self.WIDTH, self.HEIGHT, self.screen_change, self.go_back_screen)
+        self.window_stack = [] # manage navigating back through windows
+        self.windows = {        # have windows be displayed depedning on activity                  # give windows an "on" and an "off" attribute.        
+
+            "WELCOME": self.current_window,
+            "GENERATION": GenerationMenu(self.screen, 0,0,self.WIDTH, self.HEIGHT, self.MENU_WIDTH, self.screen_change, self.go_back_screen, self.gen_map),
+            "IMPORT": ImportMenu(self.screen, 0,0, self.WIDTH, self.HEIGHT, self.screen_change, self.go_back_screen),
+            "HELP": HelpMenu(self.screen, 0,0, self.WIDTH, self.HEIGHT, self.screen_change, self.go_back_screen),
+            "MAP": MapMenu(self.screen, 0,0, self.WIDTH, self.HEIGHT, self.screen_change, self.go_back_screen, self.map_array, self.perlin_width, self.perlin_height, view_libs=self.view_libs)
+        } 
+        
+        self.window_stack.append(self.current_window.get_ID())
 
 
-windows = {"menu":True,        # have windows be displayed depending on whether they are active or not. 
-            "import":False, 
-            "generation":False,
-            "view_map":False, 
-            "help":False} 
+
+        # self.current_window = self.windows["GENERATION"]
+        self.current_window.show_self()
+
+        for val in self.windows.values():
+            val.hide_self()
+
+        self.running = True
+
+        print(self.current_window.get_ID())
 
 
-screen = pygame.display.set_mode((WIDTH+MENU_WIDTH, HEIGHT), flags=pygame.RESIZABLE)
-clock = pygame.time.Clock()
-FPS = 60
+    def run(self):
+        if self.run:            
+            self.screen.fill((255,255,255))
 
+            self.events = pygame.event.get()
+            for event in self.events:
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    print("End")
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    print(pos)
+                    try:
+                        print(rules.biomes[self.array_ids[pos[0], pos[1]]])
+                        print(f"altitude:{self.altitude_map[pos[0], pos[1]]}, moisture:{self.moisture_map[pos[0], pos[1]]}, temperature:{self.temperature_map[pos[0], pos[1]]}")
+                    except:
+                        pass
 
-def generate_perlin_map(perlin_width=perlin_width, perlin_height=perlin_height, octaves= 1, frequency= 1, amplitude= 1, persistence=0.5, lacunarity= 2, SEED= 0): # default values
-    noise_map = perlin(perlin_width,perlin_height,octaves, frequency, amplitude, persistence, lacunarity, SEED)
-    return noise_map
+            self.current_window.show_self()
+            self.current_window.update()
 
-def rgb_perlin_mask(noise_map, blue_bound=-0.15, green_bound=0.3):
-    print(locals())
-    global perlin_width, perlin_height
-    rgb_array = np.zeros((perlin_width,perlin_height,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
-    # boolean array indexing, masks perlin values to colour
-    rgb_array[(noise_map >= -1) & (noise_map < blue_bound)] = (0,0,255) # blue masking
-    rgb_array[(noise_map >= blue_bound) & (noise_map < green_bound)] = (0,255,0) # green masking
-    rgb_array[(noise_map >= green_bound) & (noise_map <= 1.0)] = (190,190,190) # gray masking
+            pygame_widgets.update(self.events)
+            pygame.display.flip()
+            self.clock.tick(self.FPS)   
 
-    return rgb_array # returns an array of rgb values, and the originally generated perlin noise map. 
-
-def gen_map_in_class():
-    params = generation_menu.get_params()
-
-    noise_map = generate_perlin_map(
-        perlin_width,
-        perlin_height, 
-        octaves= params["octaves"], 
-        frequency=params["frequency"], 
-        amplitude=params["amplitude"], 
-        persistence=params["persistence"], 
-        lacunarity=params["lacunarity"], 
-        SEED= 0)
     
-    global rgb_array
+    def screen_change(self, key):
+        self.current_window.hide_self()   
+        self.current_window = self.windows[key]
+        self.current_window.show_self()
 
-    rgb_array = rgb_perlin_mask(noise_map,
-        blue_bound=params["blue_boundary"], 
-        green_bound=params["green_boundary"])  
+        self.window_stack.append(self.current_window.get_ID())
+        print(self.window_stack)
+        print(f"Now showing {self.current_window.get_ID()} screen")
+        print(self.windows)
+
+    def go_back_screen(self):
+        if len(self.window_stack) > 1:
+            self.current_window.hide_self()
+            self.window_stack.pop()
+            self.current_window = self.windows[self.window_stack[-1]] # get last screen in stack list
+            self.current_window.show_self()
+        else:
+            print("Stack Empty")
+
+    def gen_map(self, params):
+        print("Gen map! ")
+        print(params)
+
+        self.altitude_map = perlin(
+            self.perlin_width,
+            self.perlin_height,
+            octaves= params["altitude_octaves"],
+            frequency=params["altitude_frequency"],
+            amplitude=params["altitude_amplitude"],
+            persistence=params["altitude_persistence"],
+            lacunarity=params["altitude_lacunarity"],
+            SEED= 0)
+
+        self.moisture_map = perlin(
+            self.perlin_width,
+            self.perlin_height,
+            octaves= params["moisture_octaves"],
+            frequency=params["moisture_frequency"],
+            amplitude=params["moisture_amplitude"],
+            persistence=params["moisture_persistence"],
+            lacunarity=params["moisture_lacunarity"],
+            SEED= 0)
+        
+        self.temperature_map = perlin(
+            self.perlin_width,
+            self.perlin_height,
+            octaves= params["temperature_octaves"],
+            frequency=params["temperature_frequency"],
+            amplitude=params["temperature_amplitude"],
+            persistence=params["temperature_persistence"],
+            lacunarity=params["temperature_lacunarity"],
+            SEED= 0)
+
+
+
+
+        self.convert_noise_to_map(altitude_map=self.altitude_map, 
+                                      temperature_map=self.temperature_map,
+                                      moisture_map=self.moisture_map)
+
+    def convert_noise_to_map(self, altitude_map, temperature_map, moisture_map):
+        # normalise
+        self.altitude_map = (altitude_map+1) /2
+        self.temperature_map = (temperature_map+1) /2
+        self.moisture_map = (moisture_map+1) /2
+
+        self.map_array, self.array_ids = noise_map_to_biome_map(self.altitude_map, self.moisture_map, self.temperature_map, self.perlin_width, self.perlin_height)
+
+        self.windows["MAP"].set_map(self.map_array)
+
+
+    def view_libs(self):
+        plt.figure(figsize=(10,8))
+        plt.imshow(self.altitude_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
+        plt.colorbar(label='Noise Value')
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.title("Altitude")
+        plt.show()
+
+        plt.figure(figsize=(10,8))
+        plt.imshow(self.moisture_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
+        plt.colorbar(label='Noise Value')
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.title("Moisture")
+        plt.show()
     
-    
-# def test1():
-#     print("BEAST")
+        plt.figure(figsize=(10,8))
+        plt.imshow(self.temperature_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
+        plt.colorbar(label='Noise Value')
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.title("Temperature")
+        plt.show()
+     
 
-# def test2():
-#     print("MODE")
+pmain = Program()
 
-
-# #test
-# test_welcome = Menu(screen, 0, 0)
-# test_welcome.add_button(screen=screen, x= 50, y= 100, height=30, width=100, text="MODE", passed_func=test1)
-# test_welcome.add_button(screen=screen, x= 200, y= 100, height=30, width=100, text="BEAST", passed_func=test2)
-
-
-
-# initialise settings menu
-generation_menu = Menu(screen, 512, 0)
-generation_menu.add_slider(screen=screen, x=550, y=30, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=16, slider_step=1, label_text="Octaves", key="octaves")
-generation_menu.add_slider(screen=screen, x=550, y=130, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=32, slider_step=0.25, label_text="Frequency", key="frequency")
-generation_menu.add_slider(screen=screen, x=550, y=230, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=32, slider_step=0.25, label_text="Amplitude", key="amplitude")
-generation_menu.add_slider(screen=screen, x=550, y=330, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=2, slider_step=0.25, label_text="Persistence", key="persistence")
-generation_menu.add_slider(screen=screen, x=550, y=430, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=4, slider_step=0.5, label_text="Lacunarity", key="lacunarity")
-generation_menu.add_slider(screen=screen, x=20, y=550, slider_width=100, slider_height=15, slider_min=-1.0, slider_max=1, slider_step=0.01, label_text="Blue Noise Boundary", key="blue_boundary")
-generation_menu.add_slider(screen=screen, x=20, y=650, slider_width=100, slider_height=15, slider_min=-1.0, slider_max=1, slider_step=0.01, label_text="Green Noise Boundary", key="green_boundary")
-
-generation_menu.add_button(screen=screen, x=550, y=530, width = 100, height = 30, text= "Generate", passed_func=gen_map_in_class)
-
-
-map_surf = pygame.Surface((perlin_width, perlin_height)) # map surface
-noise_map  = generate_perlin_map()
-rgb_array = rgb_perlin_mask(noise_map)
-
-noise_map = perlin(perlin_width,perlin_height,frequency=4, octaves=6, SEED=2) # np array
 
 # 12/10/2025 - currently at the point of implementing screens. need to create a welcome menu screen and implement true/false switching within the program class. then work on page nav & adding a perlin function into the program classs. 
-
-
-
-
+# 17/10/2025 - sorted screen functionality, can move back and forth use buttons etc. Next step is to work on layering multiple maps generated. 
 #run loop
-running = True
-while running:
-    events = pygame.event.get()
-    for event in events:
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            pos = pygame.mouse.get_pos()
-            print(pos)
-            try:
-                print(noise_map[pos[0]][pos[1]])
-            except:
-                pass
-    screen.fill((255,255,255))
-
-    pygame.surfarray.blit_array(map_surf, rgb_array)
-    screen.blit(map_surf, (0,0))
-
-    slider_vars = generation_menu.update()
-    pygame_widgets.update(events)
-
-    pygame.display.flip()
-    clock.tick(FPS)
+while pmain.running:
+    pmain.run()
 
 
 
-# print(slider_vars)
+
+plt.figure(figsize=(10,8))
+plt.imshow(pmain.noise_map, cmap="viridis", origin="lower", vmin=-1.0, vmax=1.0)
+plt.colorbar(label='Noise Value')
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.title("Fractal Noise attempt")
+plt.show()

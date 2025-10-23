@@ -5,7 +5,7 @@ from slider import LabeledSlider
 import pygame_widgets
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
-
+import numpy as np
 
 
 
@@ -28,8 +28,8 @@ class Menu():
         self.add_button(screen, screen_width - 50, 20, 50, 20, "Home", lambda: screen_change("WELCOME"))        
         self.add_button(screen, screen_width - 50, 80, 50, 20, "Back", back_screen)        
 
-    def add_slider(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key):
-        temp = LabeledSlider(screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key=key, label_fontsize=15)
+    def add_slider(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key, initial):
+        temp = LabeledSlider(screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key=key, label_fontsize=15, initial=initial)
         self.sliders.append(temp)
         self.widgets.append(temp)
 
@@ -63,21 +63,34 @@ class Menu():
     def get_ID(self):
         return self.ID
 
-
 class GenerationMenu(Menu):
     def __init__(self, screen, x, y, screen_width, screen_height, MENU_WIDTH, screen_change, back_screen, gen_map):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "GENERATION"
 
-        self.add_slider(screen=screen, x=550, y=30, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=16, slider_step=1, label_text="Octaves", key="octaves")
-        self.add_slider(screen=screen, x=550, y=130, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=32, slider_step=0.25, label_text="Frequency", key="frequency")
-        self.add_slider(screen=screen, x=550, y=230, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=32, slider_step=0.25, label_text="Amplitude", key="amplitude")
-        self.add_slider(screen=screen, x=550, y=330, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=2, slider_step=0.25, label_text="Persistence", key="persistence")
-        self.add_slider(screen=screen, x=550, y=430, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=4, slider_step=0.5, label_text="Lacunarity", key="lacunarity")
-        self.add_slider(screen=screen, x=20, y=550, slider_width=100, slider_height=15, slider_min=-1.0, slider_max=1, slider_step=0.01, label_text="Blue Noise Boundary", key="blue_boundary")
-        self.add_slider(screen=screen, x=20, y=650, slider_width=100, slider_height=15, slider_min=-1.0, slider_max=1, slider_step=0.01, label_text="Green Noise Boundary", key="green_boundary")
-      
-        self.add_button(screen=screen, x=550, y=530, width = 100, height = 30, text= "Generate", passed_func=lambda: (screen_change("MAP"), gen_map(self.get_params()))) # add gen map functions to lambda function later
+        self.add_textbox(screen=screen, x=20, y=0, height=25, width=256, fontsize=20, text="Altitude Parameters")
+        self.add_slider(screen=screen, x=20, y=60, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=16, slider_step=1, label_text="Octaves", key="altitude_octaves", initial=8)
+        self.add_slider(screen=screen, x=20, y=160, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=32, slider_step=0.01, label_text="Frequency", key="altitude_frequency", initial=0.001)
+        self.add_slider(screen=screen, x=20, y=260, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=32, slider_step=0.25, label_text="Amplitude", key="altitude_amplitude", initial=2)
+        self.add_slider(screen=screen, x=20, y=360, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=2, slider_step=0.01, label_text="Persistence", key="altitude_persistence", initial=0.5)
+        self.add_slider(screen=screen, x=20, y=460, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=4, slider_step=0.01, label_text="Lacunarity", key="altitude_lacunarity", initial=2.0)
+        
+        self.add_textbox(screen=screen, x=296, y=0, height=25, width=256, fontsize=20, text="Moisture Parameters")
+        self.add_slider(screen=screen, x=296, y=60, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=16, slider_step=1, label_text="Octaves", key="moisture_octaves", initial=8)
+        self.add_slider(screen=screen, x=296, y=160, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=32, slider_step=0.25, label_text="Frequency", key="moisture_frequency", initial=0.001)
+        self.add_slider(screen=screen, x=296, y=260, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=32, slider_step=0.25, label_text="Amplitude", key="moisture_amplitude", initial=2)
+        self.add_slider(screen=screen, x=296, y=360, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=2, slider_step=0.01, label_text="Persistence", key="moisture_persistence", initial=0.5)
+        self.add_slider(screen=screen, x=296, y=460, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=4, slider_step=0.01, label_text="Lacunarity", key="moisture_lacunarity", initial=2.0)
+
+        self.add_textbox(screen=screen, x=572, y=0, height=25, width=256, fontsize=20, text="Temperature Parameters")
+        self.add_slider(screen=screen, x=572, y=60, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=16, slider_step=1, label_text="Octaves", key="temperature_octaves", initial=8)
+        self.add_slider(screen=screen, x=572, y=160, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=32, slider_step=0.001, label_text="Frequency", key="temperature_frequency", initial=0.001)
+        self.add_slider(screen=screen, x=572, y=260, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=32, slider_step=0.25, label_text="Amplitude", key="temperature_amplitude", initial=2)
+        self.add_slider(screen=screen, x=572, y=360, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=2, slider_step=0.01, label_text="Persistence", key="temperature_persistence", initial=0.5)
+        self.add_slider(screen=screen, x=572, y=460, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=4, slider_step=0.01, label_text="Lacunarity", key="temperature_lacunarity", initial=2.0)
+
+
+        self.add_button(screen=screen, x=296, y=530, width = 100, height = 30, text= "Generate", passed_func=lambda: (screen_change("MAP"), gen_map(self.get_params()))) # add gen map functions to lambda function later
 
 class WelcomeMenu(Menu):
     def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen):
@@ -101,7 +114,7 @@ class HelpMenu(Menu):
 
 
 class MapMenu(Menu):
-    def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen, perlin_map, perlin_width, perlin_height):
+    def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen, perlin_map, perlin_width, perlin_height, view_libs):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "MAP"
 
@@ -109,8 +122,12 @@ class MapMenu(Menu):
         self.perlin_map = perlin_map
         self.map_surf = pygame.Surface((perlin_width, perlin_height)) #
 
+        self.add_button(screen=screen, x= screen_width-50, y= 100, height=30, width=100, text="view libs", passed_func=view_libs)
+        self.add_button(screen=screen, x= screen_width-50, y= 200, height=30, width=100, text="save", passed_func=self.save_map)
+
     def set_map(self, map):
-        self.perlin_map = map
+        self.perlin_map = map  
+        self.perlin_map = self.perlin_map.transpose(1,0,2)
     
     #override
     def update(self):
@@ -121,3 +138,6 @@ class MapMenu(Menu):
         pygame.surfarray.blit_array(self.map_surf, self.perlin_map)
         self.screen.blit(self.map_surf,(0,0))
 
+    def save_map(self):
+        name_temp = input("fileName: ")
+        np.save(f".\{name_temp}", self.perlin_map)

@@ -45,13 +45,13 @@ class BiomeRules():
         self.OCEAN_LEVEL = 0.5
         self.BEACH_LEVEL = 0.51
         self.HILL_LEVEL = 0.6
-        self.MOUNTAIN_LEVEL = 0.7
+        self.MOUNTAIN_LEVEL = 0.65
 
         #moisture
         self.DESERT_MOISTURE = 0.4
         self.GRASSLAND_MOISTURE = 0.5
-        self.FOREST_MOISTURE = 0.6
-        self.SWAMP_MOISTURE = 0.7
+        self.FOREST_MOISTURE = 0.55
+        self.SWAMP_MOISTURE = 0.65
 
         #temperature   
         self.MOUNTAINS_TEMP = 0.2
@@ -86,8 +86,8 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
 
     is_swamp = (temperature_map >= rules.SWAMP_TEMP) & ~hill_mask & land_mask & (moisture_map >= rules.SWAMP_MOISTURE)   # swamps are cold, not hills but on land, and very moist. 
     is_desert = (temperature_map >= rules.DESERT_TEMP) & land_mask & (moisture_map < rules.DESERT_MOISTURE) # deserts are rather warm, on any land, and rather dry
-    is_forest = (temperature_map >= rules.FOREST_TEMP) & land_mask & (moisture_map >= rules.FOREST_MOISTURE) 
-    is_beach = (altitude_map<rules.BEACH_LEVEL) & land_mask & ~hill_mask & ~is_swamp & ~is_desert & ~is_forest & (temperature_map>= 0.3) & (moisture_map<0.8) 
+    is_forest = (temperature_map >= rules.FOREST_TEMP) & ~hill_mask & land_mask & (moisture_map >= rules.FOREST_MOISTURE) 
+    is_beach = (altitude_map<rules.BEACH_LEVEL) & land_mask & ~hill_mask & ~is_swamp & ~is_desert & (temperature_map>= 0.5) & (moisture_map<0.6) 
 
     #apply specialised biome masks
     biome_map[is_swamp] = rules.SWAMP_ID
@@ -96,8 +96,8 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     biome_map[is_beach] = rules.BEACH_ID
 
     # apply colours
-    map_array = np.zeros((perlin_width,perlin_height,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
-
+    map_array = np.zeros((perlin_height, perlin_width,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
+    
     map_array[biome_map==rules.OCEAN_ID] = rules.biome_colours[rules.OCEAN_ID]
     map_array[biome_map==rules.GRASSLAND_ID] = rules.biome_colours[rules.GRASSLAND_ID]
     map_array[biome_map==rules.FOREST_ID] = rules.biome_colours[rules.FOREST_ID]
