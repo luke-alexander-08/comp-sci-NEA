@@ -44,7 +44,6 @@ def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5,
         g_ur = gradients[h_ur % 8]
         g_bl = gradients[h_bl % 8]
         g_br = gradients[h_br % 8]
-
         #distance vectors
         d_ul = np.stack([xf,yf], axis=-1) # stacking fractional parts. visualised as a grid of 2 deep cubes, access fractional parts via index. 
         d_ur = np.stack([xf-1, yf], axis=-1) # x direction is negative, relative distance

@@ -13,7 +13,8 @@ class BiomeRules():
             5: "DESERT",
             6: "HILLS",
             7: "MOUNTAINS", 
-            8: "BEACH"
+            8: "BEACH",
+            9: "DEEP OCEAN"
         }
 
         self.biome_colours = {
@@ -24,8 +25,8 @@ class BiomeRules():
             5: (210,180,140),     #DESERT
             6: (65,89,23),       #HILLS
             7: (139,137,137),     #MOUNTAINS
-            8: (238,214,175)      #BEACH
-
+            8: (238,214,175),      #BEACH
+            9: (0,0,110)            #DEEP OCEAN
         }
 
         #ID assignment
@@ -37,11 +38,13 @@ class BiomeRules():
         self.HILLS_ID = 6
         self.MOUNTAINS_ID = 7
         self.BEACH_ID = 8
+        self.DEEP_OCEAN_ID = 9
 
         # noise maps will be normalised to 0->1 range 
         # noise maps for altiude, temperature, and moisture
 
         #altitude
+        self.DEEP_OCEAN_LEVEL = 0.45
         self.OCEAN_LEVEL = 0.5
         self.BEACH_LEVEL = 0.51
         self.HILL_LEVEL = 0.6
@@ -66,16 +69,16 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     print(rules.HILL_LEVEL)
     #need to mask
     #start by assigning biome map to all sea. then move on from there. assigning heights first then moving onto to override into other biomes. slowly build up layers. 
-    biome_map = np.full_like(altitude_map, rules.OCEAN_ID, dtype=np.uint8) # restricts values to 8 bit integers which is probably more efficient or something
+    biome_map = np.full_like(altitude_map, rules.DEEP_OCEAN_ID, dtype=np.uint8) # restricts values to 8 bit integers which is probably more efficient or something
     
     # create maps then overlay them onto the biome map
-
+    ocean_mask = altitude_map >= rules.DEEP_OCEAN_LEVEL
     land_mask = altitude_map >= rules.OCEAN_LEVEL # should return array of booleans where this applies
     hill_mask = altitude_map >= rules.HILL_LEVEL
     mountain_mask = altitude_map >= rules.MOUNTAIN_LEVEL
     
     # apply masks
-
+    biome_map[ocean_mask] = rules.OCEAN_ID
     biome_map[land_mask] = rules.GRASSLAND_ID
     biome_map[hill_mask] = rules.HILLS_ID
     biome_map[mountain_mask] = rules.MOUNTAINS_ID
@@ -97,7 +100,7 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
 
     # apply colours
     map_array = np.zeros((perlin_height, perlin_width,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
-    
+    map_array[biome_map==rules.DEEP_OCEAN_ID] = rules.biome_colours[rules.DEEP_OCEAN_ID]
     map_array[biome_map==rules.OCEAN_ID] = rules.biome_colours[rules.OCEAN_ID]
     map_array[biome_map==rules.GRASSLAND_ID] = rules.biome_colours[rules.GRASSLAND_ID]
     map_array[biome_map==rules.FOREST_ID] = rules.biome_colours[rules.FOREST_ID]
@@ -107,5 +110,5 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     map_array[biome_map==rules.MOUNTAINS_ID] = rules.biome_colours[rules.MOUNTAINS_ID]
     map_array[biome_map==rules.BEACH_ID] = rules.biome_colours[rules.BEACH_ID]
 
-    return map_array, biome_map
+    return map_array, biome_map.transpose()
 

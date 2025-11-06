@@ -25,8 +25,8 @@ import numpy as np
 
 # initialise pygame and constants
 pygame.init()
-WIDTH = 1024
-HEIGHT = 756
+WIDTH = 1000
+HEIGHT = 1000
 perlin_width = 512
 perlin_height = 512
 MENU_WIDTH = 256
