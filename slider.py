@@ -49,6 +49,8 @@ class LabeledSlider():
         
         return self.slider.getValue()
 
+    def isEnabled(self):
+        return self.label.isEnabled()
 
 
 

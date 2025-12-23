@@ -66,12 +66,13 @@ class BiomeRules():
 rules = BiomeRules()
 
 def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_width, perlin_height):
+    print(altitude_map)
     print(rules.HILL_LEVEL)
     #need to mask
     #start by assigning biome map to all sea. then move on from there. assigning heights first then moving onto to override into other biomes. slowly build up layers. 
-    biome_map = np.full_like(altitude_map, rules.DEEP_OCEAN_ID, dtype=np.uint8) # restricts values to 8 bit integers which is probably more efficient or something
+    biome_map = np.full_like(altitude_map, rules.DEEP_OCEAN_ID, dtype=np.uint8) # restricts values to 8 bit integers which is probably more efficient
     
-    # create maps then overlay them onto the biome map
+    # create maps then overlay them onto the biome mapnoise
     ocean_mask = altitude_map >= rules.DEEP_OCEAN_LEVEL
     land_mask = altitude_map >= rules.OCEAN_LEVEL # should return array of booleans where this applies
     hill_mask = altitude_map >= rules.HILL_LEVEL
@@ -109,6 +110,8 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     map_array[biome_map==rules.HILLS_ID] = rules.biome_colours[rules.HILLS_ID]
     map_array[biome_map==rules.MOUNTAINS_ID] = rules.biome_colours[rules.MOUNTAINS_ID]
     map_array[biome_map==rules.BEACH_ID] = rules.biome_colours[rules.BEACH_ID]
-
+#etc
+    print(map_array.ndim, "dims")
+    print(map_array)
     return map_array, biome_map.transpose()
 

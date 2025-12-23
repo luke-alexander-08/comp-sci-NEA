@@ -1,5 +1,5 @@
 # from perlinNoise import perlin
-from perlinNoiseold import fractal_noise
+from old.perlinNoiseold import fractal_noise
 import time
 
 # fractal_noise(2,2,0.6,2.0,12,(1024,512))

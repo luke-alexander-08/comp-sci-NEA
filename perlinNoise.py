@@ -10,21 +10,21 @@ gradients = np.array([(1, 0), (0.707, 0.707), (0, 1), (-0.707, 0.707), (-1, 0), 
 def fade(n):
     return 6*n**5 - 15*n**4 + 10*n**3
 
-def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5, lacunarity=2.0, SEED=0):
+def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5, lacunarity=2.0, SEED=0, perlin_progress=None, game_loop=None): # parameters for noise. perlin_progress used to return number of octaves completed to main program. 
+    np.random.seed(SEED)
     perm_table = np.arange(0, 255, dtype=int) # start, stop, data type. returns nums from 0-255
-    np.random.seed = SEED
     np.random.shuffle(perm_table)
-    perm_table = np.stack([perm_table, perm_table]).flatten() # duplicate elements of the table, then turns it one dimensional using flatten(). apparently therefore making it more efficient to perform operations, as no need for modulo fucntion. 
+    perm_table = np.stack([perm_table, perm_table]).flatten() # duplicate elements of the table, then turns it one dimensional using flatten(). apparently therefore making it more efficient to perform operations, as no need for modulo function. 
 
     total_noise = np.zeros((height, width)) # numpy default is rows by cols 
     max_amplitude = 0           
     x, y = np.meshgrid(np.arange(width, dtype=float), np.arange(height, dtype=float))
     
-    x /= width
+    x /= width # scales x and y coordinates to 0->1 range
     y /= height
-    for _ in range(octaves):
-        print(f"Octave: {_}")
-        scaled_x = x * frequency
+    for current_octave in range(octaves):
+        perlin_progress(octaves, current_octave+1) # sends back algorithm progress to main program
+        scaled_x = x * frequency # changes the range of noise sampled
         scaled_y = y* frequency 
 
         xi = scaled_x.astype(int) # cast numpy array to integer parts. 
@@ -34,16 +34,17 @@ def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5,
         yf = scaled_y - yi # get fraction parts
 
         # find hash values for each corner and then find gradients
-
         h_ul = perm_table[perm_table[xi & 255] + (yi&255)] # using AND operations to ensure all elements are held within the array. Array was doubled earlier, so that modulo isn't used now - instead simple AND is sure to be constrained to the set. 
         h_ur = perm_table[perm_table[(xi+1) & 255] + (yi&255)]
         h_bl = perm_table[perm_table[xi & 255] + ((yi+1)&255)]
         h_br = perm_table[perm_table[(xi+1) & 255] + ((yi+1)&255)]
 
+        # finding gradients
         g_ul = gradients[h_ul % 8]
         g_ur = gradients[h_ur % 8]
         g_bl = gradients[h_bl % 8]
         g_br = gradients[h_br % 8]
+
         #distance vectors
         d_ul = np.stack([xf,yf], axis=-1) # stacking fractional parts. visualised as a grid of 2 deep cubes, access fractional parts via index. 
         d_ur = np.stack([xf-1, yf], axis=-1) # x direction is negative, relative distance
@@ -58,22 +59,21 @@ def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5,
         dot_br = np.sum(d_br * g_br, axis=-1) 
         
         #interpolation
-        u = fade(xf)
+        u = fade(xf) # fade function returning 6n^5 - 15n^4 + 10n^3
         v = fade(yf)
 
         #lerp a+t*(b-a)
 
-        x1 = dot_ul + u*(dot_ur-dot_ul)
+        x1 = dot_ul + u*(dot_ur-dot_ul) # interpolation used to smooth values calculated
         x2 = dot_bl + u*(dot_br-dot_bl)
 
         noise_map = x1 + v*(x2-x1) # vertical interpolation 
         total_noise += noise_map * amplitude
         
-        max_amplitude += amplitude
+        max_amplitude += amplitude # max amplitude is tracked so values can be normalised later
 
-        amplitude *= persistence
-        frequency *= lacunarity
+        amplitude *= persistence # persistence controls the effect each octave has
+        frequency *= lacunarity # lacunarity changes how obvious small scale details are. 
+        game_loop() # run an iteration of the gameloop to update the progress bar. 
 
     return total_noise / max_amplitude
-
-
