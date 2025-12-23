@@ -174,17 +174,22 @@ class MapMenu(Menu):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "MAP"
 
+        self.map_size = (perlin_width, perlin_height)
         self.perlin_map = perlin_map
         self.map_surf = pygame.Surface((perlin_width, perlin_height)) #
+        self.scaled_surf = self.map_surf.copy()
 
         self.add_button(screen=screen, x= screen_width-50, y= 100, height=30, width=100, text="view libs", passed_func=view_libs)
         self.add_button(screen=screen, x= screen_width-50, y= 200, height=30, width=100, text="save", passed_func=self.show_save_box)
 
         self.save_box = self.add_textbox(screen=screen, x=250, y=550, height=100, width=200, fontsize=50, text="Enter file name: ", disabled=False, hidden=True, independent=True)
         self.save_button = self.add_button(screen=screen, x= 450, y= 550, height=100, width=100, text="save", passed_func=self.save_map, hidden=True, independent = True)
+     
+        self.mouse_pos_before_zoom = pygame.Vector2()
+        self.zoom_scale = 1
 
         self.pan_offset = pygame.Vector2() # pygame object for handling vectors
-        self.zoom_level = 1
+        self.panned_map_coords = ((0,0) - self.pan_offset) * self.zoom_scale
 
     def set_map_size(self, width, height):
         self.map_surf = pygame.Surface((width, height))
@@ -193,7 +198,9 @@ class MapMenu(Menu):
         self.perlin_map = map
         if not imported:
             self.perlin_map = self.perlin_map.transpose(1,0,2)
-    
+        
+        pygame.surfarray.blit_array(self.map_surf, self.perlin_map)
+
     #override
     def update(self):
         for obj in self.sliders:
@@ -204,7 +211,30 @@ class MapMenu(Menu):
         # print(self.perlin_map.shape)
         # print(self.map_surf.get_size())
         pygame.surfarray.blit_array(self.map_surf, self.perlin_map)
-        self.screen.blit(self.map_surf,(0,0))
+
+        self.panned_map_coords = ((0,0) - self.pan_offset) * self.zoom_scale
+        print(self.panned_map_coords)
+        self.screen.blit(self.scaled_surf,self.panned_map_coords)
+
+    def set_pan(self, pan_offset):
+        self.pan_offset -= pan_offset/self.zoom_scale
+    
+    def zoom_map(self, mouse_pos, direction):
+        mouse_pos_before_zoom = pygame.Vector2(mouse_pos) / self.zoom_scale + self.pan_offset # finds the "world position" of mouse before any zooming.
+
+        if direction == "IN":
+            self.zoom_scale *= 1.05 # zoom in/out by 10%
+        elif direction == "OUT":
+            self.zoom_scale *= 0.95
+
+        # potentialy limit extent of possible zoom. 
+
+        map_dims = pygame.Vector2(self.map_size)
+        new_map_dims = map_dims * self.zoom_scale
+        self.scaled_surf = pygame.transform.scale(self.map_surf, new_map_dims)
+        
+        # now using old world pos can adjust so the zoomed in map is offset to the mouse position. 
+        self.pan_offset = mouse_pos_before_zoom - (pygame.Vector2(mouse_pos) / self.zoom_scale)
 
 
     def show_save_box(self):
