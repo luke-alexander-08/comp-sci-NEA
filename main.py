@@ -87,7 +87,22 @@ class Program():
                 if event.type == pygame.QUIT:
                     self.running = False
                     print("End")
-                elif event.type == pygame.MOUSEBUTTONDOWN:
+                
+                if self.current_window.ID == "MAP":
+                    if event.type == pygame.MOUSEMOTION: 
+                        if event.buttons[1]: # buttons is an attribute of MOUSEMOTION event, so check if it is middle mouse after to avoid crashes. 
+                            self.current_window.set_pan(pygame.Vector2(event.rel)) # rel gives motion from where movement initially clicked. so pan is adjusted to fit it. 
+                    if event.type == pygame.MOUSEWHEEL:
+                        mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
+                        if event.y > 0:
+                            self.current_window.zoom_map(mouse_pos, "IN")
+                            print("IN")
+                        elif event.y < 0:
+                            self.current_window.zoom_map(mouse_pos, "OUT")
+                            print("OUT")
+
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     print(pos)
                     try:
@@ -95,7 +110,7 @@ class Program():
                         print(f"altitude:{self.altitude_map[pos[0], pos[1]]}, moisture:{self.moisture_map[pos[0], pos[1]]}, temperature:{self.temperature_map[pos[0], pos[1]]}")
                     except:
                         pass
-
+                
 
 
             self.current_window.show_self()
@@ -142,7 +157,9 @@ class Program():
             self.current_window.hide_self()
             self.window_stack.pop()
             self.current_window = self.windows[self.window_stack[-1]] # get last screen in stack list
+            self.current_window.on_open()
             self.current_window.show_self()
+            
         else:
             print("Stack Empty")
 
