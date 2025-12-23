@@ -25,6 +25,7 @@ import numpy as np
 
 # initialise pygame and constants
 pygame.init()
+pygame.font.init()
 perlin_width = 512
 perlin_height = 512
 MENU_WIDTH = 256
@@ -101,7 +102,9 @@ class Program():
                             self.current_window.zoom_map(mouse_pos, "OUT")
                             print("OUT")
 
-
+                    if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and self.current_window.edit_menu.placing_label:
+                        print("click!")
+                        self.current_window.edit_menu.placing_label = False # stop label following mouse, so it remains in position placed. 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     print(pos)

@@ -168,7 +168,6 @@ class LoadingMenu(Menu):
     def setloadingtext(self, text):
         self.bar_text.setText(text)
 
-
 class MapMenu(Menu):
     def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen, perlin_map, perlin_width, perlin_height, view_libs):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
@@ -191,6 +190,11 @@ class MapMenu(Menu):
         self.pan_offset = pygame.Vector2() # pygame object for handling vectors
         self.panned_map_coords = ((0,0) - self.pan_offset) * self.zoom_scale
 
+        self.add_button(screen=screen, x= screen_width-50, y= 250, height=30, width=100, text="edit menu", passed_func=self.open_edit_menu)
+
+        #edit menu
+        self.edit_menu = EditMenu(screen, 0, 0, screen_width=screen_width, screen_height=screen_height, screen_change=screen_change, back_screen=back_screen)
+
     def set_map_size(self, width, height):
         self.map_surf = pygame.Surface((width, height))
 
@@ -200,7 +204,7 @@ class MapMenu(Menu):
             self.perlin_map = self.perlin_map.transpose(1,0,2)
         
         pygame.surfarray.blit_array(self.map_surf, self.perlin_map)
-
+        self.zoom_map((0,0), "IN")
     #override
     def update(self):
         for obj in self.sliders:
@@ -211,10 +215,10 @@ class MapMenu(Menu):
         # print(self.perlin_map.shape)
         # print(self.map_surf.get_size())
         pygame.surfarray.blit_array(self.map_surf, self.perlin_map)
-
         self.panned_map_coords = ((0,0) - self.pan_offset) * self.zoom_scale
-        print(self.panned_map_coords)
         self.screen.blit(self.scaled_surf,self.panned_map_coords)
+
+        self.edit_menu.update()
 
     def set_pan(self, pan_offset):
         self.pan_offset -= pan_offset/self.zoom_scale
@@ -247,3 +251,62 @@ class MapMenu(Menu):
         self.save_box.setText("")
         self.save_box.hide()
         self.save_button.hide()
+
+    def open_edit_menu(self):
+        self.edit_menu.toggle_active()
+
+class EditMenu(Menu):
+    def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen):
+        super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
+        self.ID = "EDIT"
+
+        self.labels = {} # store labels and their coordinates
+ 
+        self.add_textbox(screen, 0, 30, 100, 30, 15, text="EDIT MENU", hidden=True)
+        self.add_button(screen=screen, x= 0, y= 50, height=30, width=100, text="Label", passed_func=self.add_label)
+        self.add_button(screen=screen, x= 0, y= 100, height=30, width=100, text="Structure", passed_func=self.add_structure)
+        self.add_button(screen=screen, x= 0, y= 150, height=30, width=100, text="Carve Map", passed_func=self.add_geographical_effect)
+
+        self.active = False
+        self.placing_label = False
+
+        self.font = pygame.font.SysFont("Times New Roman", 15)
+
+        self.hide_self()
+
+    def toggle_active(self):
+        if self.active:
+            print("Active!")
+            self.active = False
+            self.hide_self()
+        else:
+            self.show_self()
+            self.active = True
+
+    def update(self):
+        for label, dest in self.labels.items():
+            pygame.Surface.blit(self.screen, label, dest)
+
+        if self.placing_label:
+            pygame.Surface.blit(self.screen, self.label, ((pygame.mouse.get_pos()[0])+5,(pygame.mouse.get_pos()[1])-5))
+            self.labels[self.label] = ((pygame.mouse.get_pos()[0])+5, (pygame.mouse.get_pos()[1])-5)
+
+
+
+    def add_label(self):
+        self.label_box = self.add_textbox(self.screen, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1], 200, 30, 15, "Enter label name", disabled=False, on_submit=self.place_label, borderThickness=0, colour=(220,0,0,120))
+
+    def place_label(self):
+        self.label = self.font.render(self.label_box.getText(), 1, (0,0,0))
+        self.labels[self.label] = (0,0)
+        self.label_box.hide()
+        self.placing_label = True       
+    
+
+
+
+    def add_structure(self):
+        print("Structure")
+
+    def add_geographical_effect(self, geo=""):
+        print("Geography")
