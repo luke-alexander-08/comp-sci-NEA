@@ -117,8 +117,9 @@ class WelcomeMenu(Menu):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "WELCOME"
 
-        self.add_button(screen=screen, x= 50, y= 100, height=30, width=100, text="Import", passed_func=lambda: screen_change("IMPORT"))
-        self.add_button(screen=screen, x= 200, y= 100, height=30, width=100, text="generation", passed_func=lambda: screen_change("GENERATION"))
+        self.add_textbox(screen=screen, x= 250, y=50, width=0, height = 75, fontsize=50, text="Map Generation Program", colour=(255,255,255), borderThickness=0)
+        self.add_button(screen=screen, x= 312, y= 150, height=30, width=200, text="Import Menu", passed_func=lambda: screen_change("IMPORT"))
+        self.add_button(screen=screen, x= 568, y= 150, height=30, width=200, text="Generation Menu", passed_func=lambda: screen_change("GENERATION"))
 
 class ImportMenu(Menu):
     def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen, import_map):
