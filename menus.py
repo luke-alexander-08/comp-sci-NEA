@@ -6,8 +6,9 @@ import pygame_widgets
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
 from pygame_widgets.progressbar import ProgressBar
+from pygame_widgets.dropdown import Dropdown
 import numpy as np
-
+import os
 
 
 class Menu():
@@ -29,8 +30,8 @@ class Menu():
         self.add_button(screen, screen_width - 50, 20, 50, 20, "Home", lambda: screen_change("WELCOME"))        
         self.add_button(screen, screen_width - 50, 80, 50, 20, "Back", back_screen)        
 
-    def add_slider(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key, initial):
-        temp = LabeledSlider(screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key=key, label_fontsize=15, initial=initial)
+    def add_slider(self, screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key, initial, handleRadius=None):
+        temp = LabeledSlider(screen, x, y, slider_width, slider_height, slider_min, slider_max, slider_step, label_text, key=key, label_fontsize=15, initial=initial, handleRadius=handleRadius)
         self.sliders.append(temp)
         self.widgets.append(temp)
 
@@ -44,8 +45,8 @@ class Menu():
         
         return temp
 
-    def add_textbox(self, screen, x, y, width, height, fontsize, text, disabled=True, hidden=False, independent= False, colour=(220,220,220), borderThickness=3, on_submit = lambda: print()):
-        temp = TextBox(screen, x, y, width, height, fontSize=fontsize, placeholderText = text, onSubmit=on_submit, colour = colour, borderThickness=borderThickness)
+    def add_textbox(self, screen, x, y, width, height, fontsize, text="", disabled=True, hidden=False, independent= False, colour=(220,220,220), borderThickness=3, on_submit = lambda: print(), setText = None):
+        temp = TextBox(screen, x, y, width, height, fontSize=fontsize, placeholderText = text, onSubmit=on_submit, colour = colour, borderThickness=borderThickness, )
         # if disabled:
         if disabled:
             temp.disable()
@@ -53,6 +54,9 @@ class Menu():
             temp.hide()
         if not independent:
             self.widgets.append(temp)
+        if setText is not None:
+            temp.setText(setText)
+        
         return temp
 
     def get_params(self):
@@ -78,6 +82,10 @@ class Menu():
 
     def get_ID(self):
         return self.ID
+    
+    def update_dict(self, key, value):
+        self.values_dict[key] = value
+        print(self.values_dict)
 
 class GenerationMenu(Menu):
     def __init__(self, screen, x, y, screen_width, screen_height, MENU_WIDTH, screen_change, back_screen, gen_map):
@@ -104,13 +112,24 @@ class GenerationMenu(Menu):
         self.add_slider(screen=screen, x=572, y=260, slider_width=MENU_WIDTH, slider_height=15, slider_min=1, slider_max=32, slider_step=0.25, label_text="Amplitude", key="temperature_amplitude", initial=2)
         self.add_slider(screen=screen, x=572, y=360, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=2, slider_step=0.01, label_text="Persistence", key="temperature_persistence", initial=0.5)
         self.add_slider(screen=screen, x=572, y=460, slider_width=MENU_WIDTH, slider_height=15, slider_min=0, slider_max=4, slider_step=0.01, label_text="Lacunarity", key="temperature_lacunarity", initial=2.0)
-
-        self.seed_box = self.add_textbox(screen=screen, x=150, y=650, width=100, height=40, fontsize=15, text="0", disabled=False)
-        self.seed_box.setText("0")
+       
+        self.seed_box = self.add_textbox(screen=screen, x=150, y=650, width=100, height=40, fontsize=15, setText="0", disabled=False)
+        self.width_box = self.add_textbox(screen=screen, x=150, y=700, width=100, height=40, fontsize=15, setText="1024", disabled=False)
+        self.height_box = self.add_textbox(screen=screen, x=150, y=750, width=100, height=40, fontsize=15, setText="512", disabled=False)
+   
         self.add_textbox(screen=screen, x=0, y=650, width=150, height=40, fontsize=15, text="Generation Seed:")
+        self.add_textbox(screen=screen, x=0, y=700, width=150, height=40, fontsize=15, text="Map Width:")
+        self.add_textbox(screen=screen, x=0, y=750, width=150, height=40, fontsize=15, text="Map Height:")
 
-        self.add_button(screen=screen, x=296, y=530, width = 100, height = 30, text= "Generate", passed_func=lambda: (screen_change("LOAD"), gen_map(self.get_params(), seed=int(self.seed_box.getText())))) # add gen map functions to lambda function later
+        # self.add_textbox(screen=screen, x=150, y=650, width=100, height=40, fontsize=15, text="0", disabled=False, on_submit=lambda: self.update_dict("SEED"))
+
+        self.add_button(screen=screen, x=296, y=530, width = 100, height = 30, text= "Generate", passed_func=lambda: (self.get_txtbox_values(), screen_change("LOAD"), gen_map(self.get_params()))) # add gen map functions to lambda function later
         self.add_button(screen=screen, x=screen_width-100, y=50, width = 100, height = 30, text= "Help", passed_func=lambda: (screen_change("HELP"))) # add gen map functions to lambda function later
+
+    def get_txtbox_values(self):
+        self.update_dict("SEED", int(self.seed_box.getText())) # initialise noise values
+        self.update_dict("perlin_width", int(self.width_box.getText()))
+        self.update_dict("perlin_height", int(self.height_box.getText()))
 
 class WelcomeMenu(Menu):
     def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen):
@@ -126,7 +145,7 @@ class ImportMenu(Menu):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "IMPORT"
         self.import_func = import_map
-        self.import_box = self.add_textbox(screen=screen, x=100, y=100, height=100, width=200, fontsize=50, text="Enter file name: ", disabled=False)
+        self.import_box = self.add_textbox(screen=screen, x=100, y=100, height=100, width=200, fontsize=50, text="Enter file name: ", disabled=False, on_submit=self.callback)
         self.add_button(screen=screen, x= 50, y= 100, height=30, width=100, text="load", passed_func=lambda: self.callback())
         # self.add_button(screen=screen, x= 100, y=150, width=200, height=50, text="Import", passed_func=lambda: print("button"))
 
@@ -197,7 +216,9 @@ class MapMenu(Menu):
         self.edit_menu = EditMenu(screen, 0, 0, screen_width=screen_width, screen_height=screen_height, screen_change=screen_change, back_screen=back_screen)
 
     def set_map_size(self, width, height):
-        self.map_surf = pygame.Surface((width, height))
+        self.map_surf = pygame.Surface((width, height)) 
+        self.map_size = (width, height) # delete line for auto-centre on small maps. 
+
 
     def set_map(self, map, imported=False):
         self.perlin_map = map
@@ -261,19 +282,39 @@ class EditMenu(Menu):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "EDIT"
 
-        self.labels = {} # store labels and their coordinates
- 
+        self.canvas = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+        self.canvas.fill((0,0,0,0)) # makes it transparent
+        self.surface_positions = {} # store labels and their coordinates
+        self.structures = {}
+        self.load_structures()
+        self.structure_dropdown = Dropdown(screen, 0, 100, 100, 30, name="Select Structure", choices=list(self.structures.keys()), values = list(self.structures.keys()))
+        self.widgets.append(self.structure_dropdown)
+        print(self.structures)
+
         self.add_textbox(screen, 0, 30, 100, 30, 15, text="EDIT MENU", hidden=True)
         self.add_button(screen=screen, x= 0, y= 50, height=30, width=100, text="Label", passed_func=self.add_label)
-        self.add_button(screen=screen, x= 0, y= 100, height=30, width=100, text="Structure", passed_func=self.add_structure)
-        self.add_button(screen=screen, x= 0, y= 150, height=30, width=100, text="Carve Map", passed_func=self.add_geographical_effect)
+        self.add_button(screen=screen, x= 0, y= 150, height=30, width=100, text="Add Structure", passed_func=self.add_structure)
+        self.add_button(screen=screen, x= 0, y= 250, height=30, width=100, text="Paint Map", passed_func=self.paint_map)
+        # self.add_button(screen=screen, x= 0, y= 250, height=30, width=100, text="Carve Map", passed_func=self.add_geographical_effect)
 
         self.active = False
         self.placing_label = False
+        self.placing_structure = False
+        self.painting = False
+        self.draw = False
 
         self.font = pygame.font.SysFont("Times New Roman", 15)
 
+        self.add_slider(screen, 200, 500, 100, 20, 0, 255, 1, "Red", key="red",initial=0) 
+        self.add_slider(screen, 200, 600, 100, 20, 0, 255, 1, "Blue", key="blue",initial=0)
+        self.add_slider(screen, 200, 700, 100, 20, 0, 255, 1, "Green", key="green",initial=0)
+
+        self.paint_colour = (0,0,0)
+
         self.hide_self()
+
+        self.last_pos = None
+
 
     def toggle_active(self):
         if self.active:
@@ -282,32 +323,67 @@ class EditMenu(Menu):
             self.hide_self()
         else:
             self.show_self()
+            [slider.hide() for slider in self.sliders]
             self.active = True
 
     def update(self):
-        for label, dest in self.labels.items():
+
+        for obj in self.sliders:
+            self.values_dict[obj.key] = obj.update() # store slider values in self dictionary. uses key identifier
+
+        for label, dest in self.surface_positions.items():
             pygame.Surface.blit(self.screen, label, dest)
 
         if self.placing_label:
             pygame.Surface.blit(self.screen, self.label, ((pygame.mouse.get_pos()[0])+5,(pygame.mouse.get_pos()[1])-5))
-            self.labels[self.label] = ((pygame.mouse.get_pos()[0])+5, (pygame.mouse.get_pos()[1])-5)
+            self.surface_positions[self.label] = ((pygame.mouse.get_pos()[0])+5, (pygame.mouse.get_pos()[1])-5)
 
+        if self.placing_structure:
+            pygame.Surface.blit(self.screen, self.structure, ((pygame.mouse.get_pos()[0])+5,(pygame.mouse.get_pos()[1])-5))
+            self.surface_positions[self.structure] = ((pygame.mouse.get_pos()[0])+5, (pygame.mouse.get_pos()[1])-5)
 
+        if self.painting:
+            self.paint_colour = tuple(self.values_dict.values()) # set colour to sliders
 
+            if self.draw:
+                current_pos = pygame.mouse.get_pos()
+                if self.last_pos != None:
+                    pygame.draw.line(self.canvas, self.paint_colour, self.last_pos, current_pos, 5)
+                self.last_pos = current_pos
+                # self.screen.set_at(((pygame.mouse.get_pos()[0]), (pygame.mouse.get_pos()[1])), self.paint_colour)
+                print(self.draw)
+            else:
+                self.last_pos = None
+
+        self.screen.blit(self.canvas, (0,0))
+
+    def load_structures(self):
+        for filename in os.listdir(".\structures"):
+            if filename.endswith(".png"):
+                filepath = os.path.join(".\structures", filename)
+                image = pygame.image.load(filepath).convert_alpha() 
+                image = pygame.transform.scale(image, (50,50))
+
+                self.structures[filename.split(".")[0]] = image
+            
     def add_label(self):
         self.label_box = self.add_textbox(self.screen, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1], 200, 30, 15, "Enter label name", disabled=False, on_submit=self.place_label, borderThickness=0, colour=(220,0,0,120))
 
     def place_label(self):
         self.label = self.font.render(self.label_box.getText(), 1, (0,0,0))
-        self.labels[self.label] = (0,0)
+        self.surface_positions[self.label] = (0,0)
         self.label_box.hide()
-        self.placing_label = True       
-    
+        self.placing_label = True
 
-
-
-    def add_structure(self):
+    def add_structure(self): # village, city, 
         print("Structure")
+        self.structure = self.structures[self.structure_dropdown.getSelected()].copy()
+        self.placing_structure = True
+
 
     def add_geographical_effect(self, geo=""):
         print("Geography")
+
+    def paint_map(self):
+        [slider.show() for slider in self.sliders]
+        self.painting = True

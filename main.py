@@ -102,9 +102,19 @@ class Program():
                             self.current_window.zoom_map(mouse_pos, "OUT")
                             print("OUT")
 
-                    if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and self.current_window.edit_menu.placing_label:
+                    if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and (self.current_window.edit_menu.placing_label or self.current_window.edit_menu.placing_structure):
                         print("click!")
-                        self.current_window.edit_menu.placing_label = False # stop label following mouse, so it remains in position placed. 
+                        self.current_window.edit_menu.placing_label = False # stop label following mouse, so it remains in position placed.
+                        self.current_window.edit_menu.placing_structure = False 
+                    
+                    if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and self.current_window.edit_menu.painting:
+                        self.current_window.edit_menu.draw = True
+                        print("Down")
+                    
+                    if event.type == pygame.MOUSEBUTTONUP and not pygame.mouse.get_pressed()[0] and self.current_window.edit_menu.painting:
+                        self.current_window.edit_menu.draw = False
+                        print("Up")
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     print(pos)
@@ -166,55 +176,58 @@ class Program():
         else:
             print("Stack Empty")
 
-    def gen_map(self, params, seed):
+    def gen_map(self, params):
         print("Gen map! ")
         print(params)
 
+        self.perlin_width = params["perlin_width"]
+        self.perlin_height = params["perlin_height"]
+
+        self.windows["MAP"].set_map_size(params["perlin_width"], params["perlin_height"])
+
         self.windows["LOAD"].setloadingtext("Loading Altitude")
         self.altitude_map = perlin(
-            self.perlin_width,
-            self.perlin_height,
+            width= params["perlin_width"],
+            height= params["perlin_height"],
             octaves= params["altitude_octaves"],
             frequency=params["altitude_frequency"],
             amplitude=params["altitude_amplitude"],
             persistence=params["altitude_persistence"],
             lacunarity=params["altitude_lacunarity"],
-            SEED= seed, perlin_progress=self.set_perlin_progress, game_loop=self.run)
+            SEED= params["SEED"], perlin_progress=self.set_perlin_progress, game_loop=self.run)
         
         self.windows["LOAD"].setloadingtext("Loading Moisture")
         self.moisture_map = perlin(
-            self.perlin_width,
-            self.perlin_height,
+            width= params["perlin_width"],
+            height= params["perlin_height"],
             octaves= params["moisture_octaves"],
             frequency=params["moisture_frequency"],
             amplitude=params["moisture_amplitude"],
             persistence=params["moisture_persistence"],
             lacunarity=params["moisture_lacunarity"],
-            SEED= seed, perlin_progress=self.set_perlin_progress, game_loop=self.run)
+            SEED= params["SEED"], perlin_progress=self.set_perlin_progress, game_loop=self.run)
 
         self.windows["LOAD"].setloadingtext("Loading Temperature")
         self.temperature_map = perlin(
-            self.perlin_width,
-            self.perlin_height,
+            width= params["perlin_width"],
+            height= params["perlin_height"],
             octaves= params["temperature_octaves"],
             frequency=params["temperature_frequency"],
             amplitude=params["temperature_amplitude"],
             persistence=params["temperature_persistence"],
             lacunarity=params["temperature_lacunarity"],
-            SEED= seed, perlin_progress=self.set_perlin_progress, game_loop=self.run)
+            SEED= params["SEED"], perlin_progress=self.set_perlin_progress, game_loop=self.run)
 
 
-        self.convert_noise_to_map(altitude_map=self.altitude_map, 
-                                      temperature_map=self.temperature_map,
-                                      moisture_map=self.moisture_map)
+        self.convert_noise_to_map(altitude_map=self.altitude_map, temperature_map=self.temperature_map, moisture_map=self.moisture_map, perlin_width=params["perlin_width"], perlin_height=params["perlin_height"])
 
-    def convert_noise_to_map(self, altitude_map, temperature_map, moisture_map):
+    def convert_noise_to_map(self, altitude_map, temperature_map, moisture_map, perlin_width, perlin_height):
         # normalise
         self.altitude_map = (altitude_map+1) /2
         self.temperature_map = (temperature_map+1) /2
         self.moisture_map = (moisture_map+1) /2
 
-        self.map_array, self.array_ids = noise_map_to_biome_map(self.altitude_map, self.moisture_map, self.temperature_map, self.perlin_width, self.perlin_height)
+        self.map_array, self.array_ids = noise_map_to_biome_map(self.altitude_map, self.moisture_map, self.temperature_map, perlin_width, perlin_height)
 
         self.windows["MAP"].set_map(self.map_array)
         self.screen_change("MAP")
