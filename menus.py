@@ -199,7 +199,7 @@ class MapMenu(Menu):
         self.scaled_surf = self.map_surf.copy()
 
         self.add_button(screen=screen, x= screen_width-50, y= 100, height=30, width=100, text="view libs", passed_func=view_libs)
-        self.add_button(screen=screen, x= screen_width-50, y= 200, height=30, width=100, text="save", passed_func=self.show_save_box)
+        self.add_button(screen=screen, x= screen_width-50, y= 200, height=30, width=100, text="save", passed_func=self.toggle_save_box)
 
         self.save_box = self.add_textbox(screen=screen, x=250, y=550, height=100, width=200, fontsize=50, text="Enter file name: ", disabled=False, hidden=True, independent=True)
         self.save_button = self.add_button(screen=screen, x= 450, y= 550, height=100, width=100, text="save", passed_func=self.save_map, hidden=True, independent = True)
@@ -220,7 +220,7 @@ class MapMenu(Menu):
         self.map_size = (width, height) # delete line for auto-centre on small maps. 
 
 
-    def set_map(self, map, imported=False):
+    def set_map(self, map, imported=False): # discuss when writing up import function. 
         self.perlin_map = map
         if not imported:
             self.perlin_map = self.perlin_map.transpose(1,0,2)
@@ -263,9 +263,14 @@ class MapMenu(Menu):
         self.pan_offset = mouse_pos_before_zoom - (pygame.Vector2(mouse_pos) / self.zoom_scale)
 
 
-    def show_save_box(self):
-        self.save_box.show()
-        self.save_button.show()
+    def toggle_save_box(self):
+        if self.save_box.isVisible():
+            self.save_box.hide()
+            self.save_button.hide()
+
+        else:
+            self.save_box.show()
+            self.save_button.show()
 
     def save_map(self):
         print(self.perlin_map.shape)
@@ -287,7 +292,7 @@ class EditMenu(Menu):
         self.surface_positions = {} # store labels and their coordinates
         self.structures = {}
         self.load_structures()
-        self.structure_dropdown = Dropdown(screen, 0, 100, 100, 30, name="Select Structure", choices=list(self.structures.keys()), values = list(self.structures.keys()))
+        self.structure_dropdown = Dropdown(screen, 0, 800, 100, 30, name="Select Structure", choices=list(self.structures.keys()), values = list(self.structures.keys()))
         self.widgets.append(self.structure_dropdown)
         print(self.structures)
 
@@ -318,7 +323,6 @@ class EditMenu(Menu):
 
     def toggle_active(self):
         if self.active:
-            print("Active!")
             self.active = False
             self.hide_self()
         else:
