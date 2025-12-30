@@ -118,13 +118,15 @@ class Program():
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     print(pos)
-                    try:
+                    try: 
+                        pos = self.windows["MAP"].conv_map_to_screen_coords(pos)
+                        pos = int(pos[0]), int(pos[1])
+                        print(f"{pos=}")
                         print(self.array_ids[pos[0], pos[1]])
                         print(rules.biomes[self.array_ids[pos[0], pos[1]]])
                         print(f"altitude:{self.altitude_map[pos[1], pos[0]]}, moisture:{self.moisture_map[pos[1], pos[0]]}, temperature:{self.temperature_map[pos[1], pos[0]]}")
-                    except:
-                        pass
-                
+                    except Exception as e:
+                        print(e)
 
 
             self.current_window.show_self()

@@ -219,6 +219,14 @@ class MapMenu(Menu):
         self.map_surf = pygame.Surface((width, height)) 
         self.map_size = (width, height) # delete line for auto-centre on small maps. 
 
+    def conv_screen_to_map_coords(self, coord):
+        return (coord-self.pan_offset) * self.zoom_scale
+
+    def conv_map_to_screen_coords(self, coord):
+        
+        return (coord[0]/self.zoom_scale + self.pan_offset[0], coord[1]/self.zoom_scale + self.pan_offset[1])
+
+        return (coord/self.zoom_scale + self.pan_offset)
 
     def set_map(self, map, imported=False): # discuss when writing up import function. 
         self.perlin_map = map

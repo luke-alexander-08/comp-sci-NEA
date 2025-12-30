@@ -67,6 +67,7 @@ class BiomeRules():
         #rivers
         self.SOURCE_HEIGHT = 0.6
         self.SOURCE_MOISTURE = 0.55
+        self.NUMBER_OF_RIVERS = 10
 
 rules = BiomeRules()
 
@@ -119,11 +120,11 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     map_array[biome_map==rules.MOUNTAINS_ID] = rules.biome_colours[rules.MOUNTAINS_ID]
     map_array[biome_map==rules.BEACH_ID] = rules.biome_colours[rules.BEACH_ID]
 #etc
-
-    for path in paths:
-        for pixel in path:
-            print(pixel)
-            map_array[pixel[0], pixel[1]] = rules.biome_colours[rules.OCEAN_ID]
+    if paths != None:
+        for path in paths:
+            for pixel in path:
+                print(pixel)
+                map_array[pixel[0], pixel[1]] = rules.biome_colours[rules.OCEAN_ID]
 
     print(map_array.ndim, "dims")
     print(map_array)
@@ -138,44 +139,82 @@ def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_m
     source_map[height_mask & moisture_mask] = True
 
     coords = np.transpose(np.nonzero(source_map))
-    print(coords)
+    if len(coords) == 0:
+        return None
+    print(list(coords))
+
+    random_sample_coords = np.random.choice(len(coords), rules.NUMBER_OF_RIVERS)
+
+    random_coords = coords[random_sample_coords]
+
     paths = []
-    for y,x in coords:
-        path = calculate_river_flow(altitude_map,path=[[y,x]], coord = [y,x],biome_map=biome_map)
+    for y,x in random_coords:
+        path = calculate_river_flow(altitude_map, coord = [y,x])
         # print(path, "print")
         paths.append(path)
 
     return paths
     
+surrounding = [[1, 0], [0, 1], [-1, 0],[0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+
+def calculate_river_flow(altitude_map, coord): # while loop
+    path = []
+    y, x = coord
+    
+    while True:
+        path.append((y,x))
+
+        lowest_neighbour = next_lowest_neighbour(y, x, altitude_map=altitude_map)
+
+        if lowest_neighbour == None or altitude_map[lowest_neighbour[0], lowest_neighbour[1]] <= rules.OCEAN_LEVEL: 
+            break
+        y, x = lowest_neighbour
+
+    return path
+
+def next_lowest_neighbour(y, x, altitude_map):
+    rows, columns = np.shape(altitude_map)
+    lowest_neighbour = None
+    current_coord_height = altitude_map[y,x]
+
+    for dy, dx in surrounding:
+        ny = y + dy
+        nx = x + dx
+        if 0 <= ny < rows and 0 <= nx < columns: # in array bounds. 
+            if altitude_map[ny, nx] < current_coord_height:
+                current_coord_height = altitude_map[ny, nx]
+                lowest_neighbour = [ny, nx]
+
+    return lowest_neighbour
 
 
-def calculate_river_flow(altitude_map, path, coord, biome_map): # recursive
-    surrounding = [[1, 0], [0, 1], [-1, 0],[0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
-    surrounding = map(np.array, surrounding)
-    # print(coord)
-    lowest_coord = [coord[0], coord[1]]
-    coord_height = altitude_map[coord[0], coord[1]]
+# def calculate_river_flow(altitude_map, path, coord, biome_map): # recursive
+#     surrounding = [[1, 0], [0, 1], [-1, 0],[0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+#     surrounding = map(np.array, surrounding)
+#     # print(coord)
+#     lowest_coord = [coord[0], coord[1]]
+#     coord_height = altitude_map[coord[0], coord[1]]
 
-    for tile in surrounding:
-        # print(coord, tile, "Cord")
-        adjacent = tile + coord
-        # print(adjacent, "adjacent")
-        try:
-            if altitude_map[adjacent[0], adjacent[1]] < coord_height:
-                coord_height = altitude_map[adjacent[0], adjacent[1]]
-                lowest_coord = [adjacent[0], adjacent[1]]
-        except:
-            pass
+#     for tile in surrounding:
+#         # print(coord, tile, "Cord")
+#         adjacent = tile + coord
+#         # print(adjacent, "adjacent")
+#         try:
+#             if altitude_map[adjacent[0], adjacent[1]] < coord_height:
+#                 coord_height = altitude_map[adjacent[0], adjacent[1]]
+#                 lowest_coord = [adjacent[0], adjacent[1]]
+#         except:
+#             pass
 
-    path.append(lowest_coord)
-    print(path)
-    # print(lowest_coord, coord)
-    if lowest_coord == coord: # endless sink
-        # print("return, sink")
-        return path
-    elif biome_map[lowest_coord[0], lowest_coord[1]] == 1:
-        # print("return, sea")
-        return path
-    else:
-        # print("recursion")
-        return calculate_river_flow(altitude_map, path, lowest_coord, biome_map)
+#     path.append(lowest_coord)
+#     print(path)
+#     # print(lowest_coord, coord)
+#     if lowest_coord == coord: # endless sink
+#         # print("return, sink")
+#         return path
+#     elif biome_map[lowest_coord[0], lowest_coord[1]] == 1:
+#         # print("return, sea")
+#         return path
+#     else:
+#         # print("recursion")
+#         return calculate_river_flow(altitude_map, path, lowest_coord, biome_map)
