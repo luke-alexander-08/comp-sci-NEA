@@ -1,4 +1,5 @@
 from perlinNoise import perlin
+from collections import deque # deque has more efficient time complexity. 
 import numpy as np
 # biome definitions
 
@@ -67,7 +68,8 @@ class BiomeRules():
         #rivers
         self.SOURCE_HEIGHT = 0.6
         self.SOURCE_MOISTURE = 0.55
-        self.NUMBER_OF_RIVERS = 10
+        self.NUMBER_OF_RIVERS = 1
+        self.MAX_LAKE_SIZE = 500
 
 rules = BiomeRules()
 
@@ -105,7 +107,7 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     biome_map[is_forest] = rules.FOREST_ID
     biome_map[is_beach] = rules.BEACH_ID
 
-    paths = calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_map)
+    paths, sinks = calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_map)
 
     # print(path, "path")
     # apply colours
@@ -125,6 +127,11 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
             for pixel in path:
                 print(pixel)
                 map_array[pixel[0], pixel[1]] = rules.biome_colours[rules.OCEAN_ID]
+
+    for sink in sinks:
+        for node in sink:
+                map_array[node[0], node[1]] = rules.biome_colours[rules.OCEAN_ID]
+
 
     print(map_array.ndim, "dims")
     print(map_array)
@@ -148,17 +155,20 @@ def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_m
     random_coords = coords[random_sample_coords]
 
     paths = []
+    sink_nodes = []
     for y,x in random_coords:
-        path = calculate_river_flow(altitude_map, coord = [y,x])
+        path, sinks = calculate_river_flow(altitude_map, coord = [y,x])
         # print(path, "print")
         paths.append(path)
+        sink_nodes.join(sinks)
 
-    return paths
+    return paths, sink_nodes
     
 surrounding = [[1, 0], [0, 1], [-1, 0],[0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
 
 def calculate_river_flow(altitude_map, coord): # while loop
     path = []
+    sinks = []
     y, x = coord
     
     while True:
@@ -166,11 +176,17 @@ def calculate_river_flow(altitude_map, coord): # while loop
 
         lowest_neighbour = next_lowest_neighbour(y, x, altitude_map=altitude_map)
 
-        if lowest_neighbour == None or altitude_map[lowest_neighbour[0], lowest_neighbour[1]] <= rules.OCEAN_LEVEL: 
+        if lowest_neighbour == None:
+            print("Sink!")   
+            print(sinks) 
+            lowest_neighbour, sink_nodes = fill_sink(y, x, altitude_map=altitude_map)
+            sinks += sink_nodes
+        elif altitude_map[lowest_neighbour[0], lowest_neighbour[1]] <= rules.OCEAN_LEVEL: 
             break
+
         y, x = lowest_neighbour
 
-    return path
+    return path, sinks
 
 def next_lowest_neighbour(y, x, altitude_map):
     rows, columns = np.shape(altitude_map)
@@ -186,6 +202,49 @@ def next_lowest_neighbour(y, x, altitude_map):
                 lowest_neighbour = [ny, nx]
 
     return lowest_neighbour
+
+sink = set()
+
+def fill_sink(y, x, altitude_map):
+    sink.add((y,x))
+    rows, columns = np.shape(altitude_map) # map boundaries
+    # check which coordinates are flooded. 
+    edges = [] # coordinates higher than the water level
+    search_queue = deque([(y,x)]) # tiles to search
+    print(search_queue, [y,x], "node1")
+    sink_height = altitude_map[y,x]
+
+    while len(search_queue) > 0 and len(sink) < rules.MAX_LAKE_SIZE:
+        node = search_queue.popleft()
+        print(node, "Node")
+        y, x = node
+        for dy, dx in surrounding: # observe neighbours
+            ny = y + dy
+            nx = x + dx
+            if 0 <= ny < rows and 0 <= nx < columns and (ny,nx) not in sink:
+                neighbour_height = altitude_map[ny,nx] #compare to neighbour height
+                if neighbour_height > sink_height:
+                    edges.append((ny,nx))
+                else:
+                    sink.add((ny,nx))
+                    search_queue.append([(ny,nx)])
+
+    spill_node = None # spill node will the node on the edge with lowest vlaue 
+    lowest_altitude = 2 # impossibly high so overwritten instantly
+
+    for rim in edges: 
+        rim_altitude = altitude_map[rim[0], rim[1]]
+        if rim_altitude < lowest_altitude:
+            spill_node = rim
+            lowest_altitude = rim_altitude
+
+    print(spill_node, "spill")
+    print(sink, "sink")
+    print(edges, "edges")
+    return spill_node, sink
+    
+
+
 
 
 # def calculate_river_flow(altitude_map, path, coord, biome_map): # recursive

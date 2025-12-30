@@ -226,7 +226,6 @@ class MapMenu(Menu):
         
         return (coord[0]/self.zoom_scale + self.pan_offset[0], coord[1]/self.zoom_scale + self.pan_offset[1])
 
-        return (coord/self.zoom_scale + self.pan_offset)
 
     def set_map(self, map, imported=False): # discuss when writing up import function. 
         self.perlin_map = map
