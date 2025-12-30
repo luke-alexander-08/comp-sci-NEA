@@ -226,7 +226,8 @@ class MapMenu(Menu):
             self.perlin_map = self.perlin_map.transpose(1,0,2)
         
         pygame.surfarray.blit_array(self.map_surf, self.perlin_map)
-        self.zoom_map((0,0), "IN")
+        self.scaled_surf = self.map_surf.copy()
+        
     #override
     def update(self):
         for obj in self.sliders:
@@ -238,6 +239,7 @@ class MapMenu(Menu):
         # print(self.map_surf.get_size())
         pygame.surfarray.blit_array(self.map_surf, self.perlin_map)
         self.panned_map_coords = ((0,0) - self.pan_offset) * self.zoom_scale
+        # print(self.panned_map_coords)
         self.screen.blit(self.scaled_surf,self.panned_map_coords)
 
         self.edit_menu.update()

@@ -27,6 +27,7 @@ class BiomeRules():
             7: (139,137,137),     #MOUNTAINS
             8: (238,214,175),      #BEACH
             9: (0,0,110)            #DEEP OCEAN
+            
         }
 
         #ID assignment
@@ -62,6 +63,10 @@ class BiomeRules():
         self.FOREST_TEMP = 0.4
         self.GRASSLAND_TEMP = 0.5
         self.DESERT_TEMP = 0.7
+
+        #rivers
+        self.SOURCE_HEIGHT = 0.6
+        self.SOURCE_MOISTURE = 0.55
 
 rules = BiomeRules()
 
@@ -99,6 +104,9 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     biome_map[is_forest] = rules.FOREST_ID
     biome_map[is_beach] = rules.BEACH_ID
 
+    paths = calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_map)
+
+    # print(path, "path")
     # apply colours
     map_array = np.zeros((perlin_height, perlin_width,3), dtype=np.uint8) # 3 deep for RGB, unit provides range from 0-255
     map_array[biome_map==rules.DEEP_OCEAN_ID] = rules.biome_colours[rules.DEEP_OCEAN_ID]
@@ -111,7 +119,63 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     map_array[biome_map==rules.MOUNTAINS_ID] = rules.biome_colours[rules.MOUNTAINS_ID]
     map_array[biome_map==rules.BEACH_ID] = rules.biome_colours[rules.BEACH_ID]
 #etc
+
+    for path in paths:
+        for pixel in path:
+            print(pixel)
+            map_array[pixel[0], pixel[1]] = rules.biome_colours[rules.OCEAN_ID]
+
     print(map_array.ndim, "dims")
     print(map_array)
+
     return map_array, biome_map.transpose()
 
+def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_map):
+    height_mask = altitude_map >= rules.SOURCE_HEIGHT
+    moisture_mask = moisture_map >= rules.SOURCE_MOISTURE
+
+    source_map = np.full_like(altitude_map, False, dtype=np.uint8) # Set all values to false initially
+    source_map[height_mask & moisture_mask] = True
+
+    coords = np.transpose(np.nonzero(source_map))
+    print(coords)
+    paths = []
+    for y,x in coords:
+        path = calculate_river_flow(altitude_map,path=[[y,x]], coord = [y,x],biome_map=biome_map)
+        # print(path, "print")
+        paths.append(path)
+
+    return paths
+    
+
+
+def calculate_river_flow(altitude_map, path, coord, biome_map): # recursive
+    surrounding = [[1, 0], [0, 1], [-1, 0],[0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
+    surrounding = map(np.array, surrounding)
+    # print(coord)
+    lowest_coord = [coord[0], coord[1]]
+    coord_height = altitude_map[coord[0], coord[1]]
+
+    for tile in surrounding:
+        # print(coord, tile, "Cord")
+        adjacent = tile + coord
+        # print(adjacent, "adjacent")
+        try:
+            if altitude_map[adjacent[0], adjacent[1]] < coord_height:
+                coord_height = altitude_map[adjacent[0], adjacent[1]]
+                lowest_coord = [adjacent[0], adjacent[1]]
+        except:
+            pass
+
+    path.append(lowest_coord)
+    print(path)
+    # print(lowest_coord, coord)
+    if lowest_coord == coord: # endless sink
+        # print("return, sink")
+        return path
+    elif biome_map[lowest_coord[0], lowest_coord[1]] == 1:
+        # print("return, sea")
+        return path
+    else:
+        # print("recursion")
+        return calculate_river_flow(altitude_map, path, lowest_coord, biome_map)

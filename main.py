@@ -119,8 +119,9 @@ class Program():
                     pos = pygame.mouse.get_pos()
                     print(pos)
                     try:
+                        print(self.array_ids[pos[0], pos[1]])
                         print(rules.biomes[self.array_ids[pos[0], pos[1]]])
-                        print(f"altitude:{self.altitude_map[pos[0], pos[1]]}, moisture:{self.moisture_map[pos[0], pos[1]]}, temperature:{self.temperature_map[pos[0], pos[1]]}")
+                        print(f"altitude:{self.altitude_map[pos[1], pos[0]]}, moisture:{self.moisture_map[pos[1], pos[0]]}, temperature:{self.temperature_map[pos[1], pos[0]]}")
                     except:
                         pass
                 
@@ -196,6 +197,7 @@ class Program():
             lacunarity=params["altitude_lacunarity"],
             SEED= params["SEED"], perlin_progress=self.set_perlin_progress, game_loop=self.run)
         
+
         self.windows["LOAD"].setloadingtext("Loading Moisture")
         self.moisture_map = perlin(
             width= params["perlin_width"],
@@ -205,7 +207,7 @@ class Program():
             amplitude=params["moisture_amplitude"],
             persistence=params["moisture_persistence"],
             lacunarity=params["moisture_lacunarity"],
-            SEED= params["SEED"], perlin_progress=self.set_perlin_progress, game_loop=self.run)
+            SEED= params["SEED"]+1000, perlin_progress=self.set_perlin_progress, game_loop=self.run)
 
         self.windows["LOAD"].setloadingtext("Loading Temperature")
         self.temperature_map = perlin(
@@ -216,7 +218,7 @@ class Program():
             amplitude=params["temperature_amplitude"],
             persistence=params["temperature_persistence"],
             lacunarity=params["temperature_lacunarity"],
-            SEED= params["SEED"], perlin_progress=self.set_perlin_progress, game_loop=self.run)
+            SEED= params["SEED"]+2000, perlin_progress=self.set_perlin_progress, game_loop=self.run)
 
 
         self.convert_noise_to_map(altitude_map=self.altitude_map, temperature_map=self.temperature_map, moisture_map=self.moisture_map, perlin_width=params["perlin_width"], perlin_height=params["perlin_height"])
