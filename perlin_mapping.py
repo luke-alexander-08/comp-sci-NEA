@@ -68,18 +68,18 @@ class BiomeRules():
         #rivers
         self.SOURCE_HEIGHT = 0.6
         self.SOURCE_MOISTURE = 0.55
-        self.NUMBER_OF_RIVERS = 1
-        self.MAX_LAKE_SIZE = 500
+        self.NUMBER_OF_RIVERS = 3
+        self.MAX_LAKE_SIZE = 5000000
 
 rules = BiomeRules()
 
-def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_width, perlin_height):
+def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_width, perlin_height, SEED):
     print(altitude_map)
     print(rules.HILL_LEVEL)
     #need to mask
     #start by assigning biome map to all sea. then move on from there. assigning heights first then moving onto to override into other biomes. slowly build up layers. 
     biome_map = np.full_like(altitude_map, rules.DEEP_OCEAN_ID, dtype=np.uint8) # restricts values to 8 bit integers which is probably more efficient
-    
+    np.random.seed(SEED)
     # create maps then overlay them onto the biome mapnoise
     ocean_mask = altitude_map >= rules.DEEP_OCEAN_LEVEL
     land_mask = altitude_map >= rules.OCEAN_LEVEL # should return array of booleans where this applies
@@ -125,7 +125,7 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     if paths != None:
         for path in paths:
             for pixel in path:
-                print(pixel)
+                # print(pixel)
                 map_array[pixel[0], pixel[1]] = rules.biome_colours[rules.OCEAN_ID]
 
     for sink in sinks:
@@ -148,7 +148,7 @@ def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_m
     coords = np.transpose(np.nonzero(source_map))
     if len(coords) == 0:
         return None
-    print(list(coords))
+    # print(list(coords))
 
     random_sample_coords = np.random.choice(len(coords), rules.NUMBER_OF_RIVERS)
 
@@ -157,10 +157,12 @@ def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_m
     paths = []
     sink_nodes = []
     for y,x in random_coords:
+        global sink 
+        sink = set()
         path, sinks = calculate_river_flow(altitude_map, coord = [y,x])
         # print(path, "print")
         paths.append(path)
-        sink_nodes.join(sinks)
+        sink_nodes += (sinks)
 
     return paths, sink_nodes
     
@@ -173,14 +175,16 @@ def calculate_river_flow(altitude_map, coord): # while loop
     
     while True:
         path.append((y,x))
-
+        print((y,x), "current coord. ")
         lowest_neighbour = next_lowest_neighbour(y, x, altitude_map=altitude_map)
 
         if lowest_neighbour == None:
-            print("Sink!")   
-            print(sinks) 
+            # print("Sink!")   
+            # print(sinks) 
             lowest_neighbour, sink_nodes = fill_sink(y, x, altitude_map=altitude_map)
             sinks += sink_nodes
+            if lowest_neighbour==None:
+                break
         elif altitude_map[lowest_neighbour[0], lowest_neighbour[1]] <= rules.OCEAN_LEVEL: 
             break
 
@@ -197,26 +201,28 @@ def next_lowest_neighbour(y, x, altitude_map):
         ny = y + dy
         nx = x + dx
         if 0 <= ny < rows and 0 <= nx < columns: # in array bounds. 
-            if altitude_map[ny, nx] < current_coord_height:
+            if altitude_map[ny, nx] < current_coord_height and (ny,nx) not in sink:
                 current_coord_height = altitude_map[ny, nx]
                 lowest_neighbour = [ny, nx]
 
     return lowest_neighbour
 
-sink = set()
 
 def fill_sink(y, x, altitude_map):
+    print("Called! on ", (y,x))
     sink.add((y,x))
+    current_sink_set = set()
     rows, columns = np.shape(altitude_map) # map boundaries
     # check which coordinates are flooded. 
-    edges = [] # coordinates higher than the water level
+    edges = set() # coordinates higher than the water level
     search_queue = deque([(y,x)]) # tiles to search
-    print(search_queue, [y,x], "node1")
+    # print(search_queue, [y,x], "node1")
     sink_height = altitude_map[y,x]
 
-    while len(search_queue) > 0 and len(sink) < rules.MAX_LAKE_SIZE:
+    while len(search_queue) > 0 and len(current_sink_set) < rules.MAX_LAKE_SIZE:
+        print(len(search_queue) > 0,  len(current_sink_set) < rules.MAX_LAKE_SIZE)
         node = search_queue.popleft()
-        print(node, "Node")
+        # print(node, "Node")
         y, x = node
         for dy, dx in surrounding: # observe neighbours
             ny = y + dy
@@ -224,13 +230,20 @@ def fill_sink(y, x, altitude_map):
             if 0 <= ny < rows and 0 <= nx < columns and (ny,nx) not in sink:
                 neighbour_height = altitude_map[ny,nx] #compare to neighbour height
                 if neighbour_height > sink_height:
-                    edges.append((ny,nx))
+                    edges.add((ny,nx))
+                    print("edge add!")
                 else:
+                    current_sink_set.add((ny,nx))
                     sink.add((ny,nx))
                     search_queue.append([(ny,nx)])
 
     spill_node = None # spill node will the node on the edge with lowest vlaue 
     lowest_altitude = 2 # impossibly high so overwritten instantly
+    
+    if edges == []:
+        print(current_sink_set)
+        edges = find_sink_edges(current_sink_set, altitude_map)
+
 
     for rim in edges: 
         rim_altitude = altitude_map[rim[0], rim[1]]
@@ -238,12 +251,28 @@ def fill_sink(y, x, altitude_map):
             spill_node = rim
             lowest_altitude = rim_altitude
 
-    print(spill_node, "spill")
-    print(sink, "sink")
-    print(edges, "edges")
+
+    if spill_node == None:
+        print("No edges? ")
+    # print(spill_node, "spill")
+    # print(sink, "sink")
+    # print(edges, "edges")
     return spill_node, sink
     
+def find_sink_edges(current_sink_set, altitude_map):
+    rows, columns = np.shape(altitude_map) # map boundaries
+    print("Called!")
+    sink_edges = set()
+    surrounding = [[1,0], [0,1], [-1,0], [0,-1]] # only 4 for now don't really want weird diagonal artifacts maybe. 
+    for tile in sink: 
+        for dy, dx in surrounding:
+            ny  = dy + tile[0]
+            nx = dx + tile[1]
+            if (ny,nx) not in sink and (0 <= ny < rows and 0 <= nx < columns):
+                sink_edges.add((ny,nx))
+    print(sink_edges, "sinks")
 
+    return sink_edges
 
 
 

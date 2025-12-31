@@ -223,15 +223,15 @@ class Program():
             SEED= params["SEED"]+2000, perlin_progress=self.set_perlin_progress, game_loop=self.run)
 
 
-        self.convert_noise_to_map(altitude_map=self.altitude_map, temperature_map=self.temperature_map, moisture_map=self.moisture_map, perlin_width=params["perlin_width"], perlin_height=params["perlin_height"])
+        self.convert_noise_to_map(altitude_map=self.altitude_map, temperature_map=self.temperature_map, moisture_map=self.moisture_map, perlin_width=params["perlin_width"], perlin_height=params["perlin_height"], SEED = params["SEED"])
 
-    def convert_noise_to_map(self, altitude_map, temperature_map, moisture_map, perlin_width, perlin_height):
+    def convert_noise_to_map(self, altitude_map, temperature_map, moisture_map, perlin_width, perlin_height, SEED):
         # normalise
         self.altitude_map = (altitude_map+1) /2
         self.temperature_map = (temperature_map+1) /2
         self.moisture_map = (moisture_map+1) /2
 
-        self.map_array, self.array_ids = noise_map_to_biome_map(self.altitude_map, self.moisture_map, self.temperature_map, perlin_width, perlin_height)
+        self.map_array, self.array_ids = noise_map_to_biome_map(self.altitude_map, self.moisture_map, self.temperature_map, perlin_width, perlin_height, SEED)
 
         self.windows["MAP"].set_map(self.map_array)
         self.screen_change("MAP")
