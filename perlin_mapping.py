@@ -68,7 +68,7 @@ class BiomeRules():
         #rivers
         self.SOURCE_HEIGHT = 0.6
         self.SOURCE_MOISTURE = 0.55
-        self.NUMBER_OF_RIVERS = 3
+        self.NUMBER_OF_RIVERS = 1
         self.MAX_LAKE_SIZE = 5000000
 
 rules = BiomeRules()
@@ -128,9 +128,11 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
                 # print(pixel)
                 map_array[pixel[0], pixel[1]] = rules.biome_colours[rules.OCEAN_ID]
 
-    for sink in sinks:
-        for node in sink:
-                map_array[node[0], node[1]] = rules.biome_colours[rules.OCEAN_ID]
+    # print(sinks)
+
+    for node in sinks:
+        # print(node)
+        map_array[node[0], node[1]] = rules.biome_colours[rules.OCEAN_ID]
 
 
     print(map_array.ndim, "dims")
@@ -240,7 +242,8 @@ def fill_sink(y, x, altitude_map):
     spill_node = None # spill node will the node on the edge with lowest vlaue 
     lowest_altitude = 2 # impossibly high so overwritten instantly
     
-    if edges == []:
+    print(edges, "edges")
+    if edges == set():
         print(current_sink_set)
         edges = find_sink_edges(current_sink_set, altitude_map)
 
