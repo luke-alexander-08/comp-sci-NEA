@@ -124,6 +124,7 @@ class Program():
                         print(f"{pos=}")
                         print(self.array_ids[pos[0], pos[1]])
                         print(rules.biomes[self.array_ids[pos[0], pos[1]]])
+                        print(self.flow_map[pos[1], pos[0]], "flow")
                         print(f"altitude:{self.altitude_map[pos[1], pos[0]]}, moisture:{self.moisture_map[pos[1], pos[0]]}, temperature:{self.temperature_map[pos[1], pos[0]]}")
                     except Exception as e:
                         print(e)
@@ -231,7 +232,7 @@ class Program():
         self.temperature_map = (temperature_map+1) /2
         self.moisture_map = (moisture_map+1) /2
 
-        self.map_array, self.array_ids = noise_map_to_biome_map(self.altitude_map, self.moisture_map, self.temperature_map, perlin_width, perlin_height, SEED)
+        self.map_array, self.array_ids, self.flow_map = noise_map_to_biome_map(self.altitude_map, self.moisture_map, self.temperature_map, perlin_width, perlin_height, SEED)
 
         self.windows["MAP"].set_map(self.map_array)
         self.screen_change("MAP")
@@ -282,5 +283,5 @@ pmain = Program()
 #run loop
 while pmain.running:
     pmain.run()
-
+    
 
