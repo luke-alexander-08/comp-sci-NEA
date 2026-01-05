@@ -1,0 +1,57 @@
+[
+    {
+        "name": "label",
+        "info": {
+            "pos": [
+                402,
+                267
+            ],
+            "is_text": true,
+            "text": "test"
+        }
+    },
+    {
+        "name": "Camp",
+        "info": {
+            "pos": [
+                343,
+                252
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "House",
+        "info": {
+            "pos": [
+                558,
+                322
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "Ship",
+        "info": {
+            "pos": [
+                581,
+                427
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "label",
+        "info": {
+            "pos": [
+                646,
+                350
+            ],
+            "is_text": true,
+            "text": "eesfs"
+        }
+    }
+]

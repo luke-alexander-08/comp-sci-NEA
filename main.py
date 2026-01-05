@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pygame
 from slider import LabeledSlider
 from menus import Menu, GenerationMenu, WelcomeMenu, HelpMenu, MapMenu, ImportMenu, LoadingMenu
-
+import json
 import pygame_widgets
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
@@ -102,11 +102,9 @@ class Program():
                             self.current_window.zoom_map(mouse_pos, "OUT")
                             print("OUT")
 
-                    if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and (self.current_window.edit_menu.placing_label or self.current_window.edit_menu.placing_structure):
+                    if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and self.current_window.get_is_placing():
                         print("click!")
-                        self.current_window.edit_menu.placing_label = False # stop label following mouse, so it remains in position placed.
-                        self.current_window.edit_menu.placing_structure = False 
-                    
+                        self.current_window.stop_placing()                    
                     if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and self.current_window.edit_menu.painting:
                         self.current_window.edit_menu.draw = True
                         print("Down")
@@ -115,7 +113,7 @@ class Program():
                         self.current_window.edit_menu.draw = False
                         print("Up")
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.type == pygame.MOUSEBUTTONDOWN: 
                     pos = pygame.mouse.get_pos()
                     print(pos)
                     try: 
@@ -238,11 +236,26 @@ class Program():
         self.screen_change("MAP")
         
     def import_map(self, map_file): # the issue is that not all 3 maps are saved maybe? 
-        self.map_array = np.load(f"./maps/{map_file}")
+        self.map_array = np.load(f"./maps/{map_file}.npy")
+        try:
+            map_canvas = pygame.image.load(f".\maps\canvas_{map_file}.png")
+            with open(f".\maps\json_{map_file}.json", "r") as file:
+                structure_json = json.load(file)
+                print(structure_json)
+                for structure_info in structure_json:
+                    structure, info = structure_info.split(":")
+                    self.windows["MAP"].import_edit_structure(structure, info)
+        except Exception as e:
+            print("Old map")
+            print(e)
         self.map_array.transpose()
         print(self.map_array)
         shape = self.map_array.shape
 
+
+
+        self.windows["MAP"].set_edit_canvas(map_canvas)
+        
         self.windows["MAP"].set_map_size(shape[0], shape[1])
         print(self.map_array.ndim)
         self.windows["MAP"].set_map(self.map_array, imported=True)

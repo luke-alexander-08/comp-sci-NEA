@@ -4,7 +4,10 @@ import numpy as np
 # biome definitions
 
 class BiomeRules():
-    def __init__(self):
+    def __init__(self,DEEP_OCEAN_LEVEL, OCEAN_LEVEL, BEACH_LEVEL, HILL_LEVEL, MOUNTAIN_LEVEL,
+                        DESERT_MOISTURE, GRASSLAND_MOISTURE, FOREST_MOISTURE, SWAMP_MOISTURE,    
+                        MOUNTAINS_TEMP, SWAMP_TEMP, FOREST_TEMP, GRASSLAND_TEMP, DESERT_TEMP,       
+                        SOURCE_HEIGHT, SOURCE_MOISTURE, NUMBER_OF_RIVERS, MAX_RIVER_DISTANCE):
         
         self.biomes = { # ID:BIOME
             1: "OCEAN",
@@ -46,31 +49,59 @@ class BiomeRules():
         # noise maps for altiude, temperature, and moisture
 
         #altitude
-        self.DEEP_OCEAN_LEVEL = 0.45
-        self.OCEAN_LEVEL = 0.5
-        self.BEACH_LEVEL = 0.51
-        self.HILL_LEVEL = 0.6
-        self.MOUNTAIN_LEVEL = 0.65
+        self.DEEP_OCEAN_LEVEL = DEEP_OCEAN_LEVEL
+        self.OCEAN_LEVEL = OCEAN_LEVEL
+        self.BEACH_LEVEL = BEACH_LEVEL
+        self.HILL_LEVEL = HILL_LEVEL
+        self.MOUNTAIN_LEVEL = MOUNTAIN_LEVEL
 
         #moisture
-        self.DESERT_MOISTURE = 0.4
-        self.GRASSLAND_MOISTURE = 0.5
-        self.FOREST_MOISTURE = 0.55
-        self.SWAMP_MOISTURE = 0.65
+        self.DESERT_MOISTURE = DESERT_MOISTURE
+        self.GRASSLAND_MOISTURE = GRASSLAND_MOISTURE
+        self.FOREST_MOISTURE = FOREST_MOISTURE
+        self.SWAMP_MOISTURE = SWAMP_MOISTURE
 
         #temperature   
-        self.MOUNTAINS_TEMP = 0.2
-        self.SWAMP_TEMP = 0.3
-        self.FOREST_TEMP = 0.4
-        self.GRASSLAND_TEMP = 0.5
-        self.DESERT_TEMP = 0.7
+        self.MOUNTAINS_TEMP = MOUNTAINS_TEMP
+        self.SWAMP_TEMP = SWAMP_TEMP
+        self.FOREST_TEMP = FOREST_TEMP
+        self.GRASSLAND_TEMP = GRASSLAND_TEMP
+        self.DESERT_TEMP = DESERT_TEMP
 
         #rivers
-        self.SOURCE_HEIGHT = 0.6
-        self.SOURCE_MOISTURE = 0.55
-        self.NUMBER_OF_RIVERS = 10
-        self.MAX_RIVER_DISTANCE = 50
-rules = BiomeRules()
+        self.SOURCE_HEIGHT = SOURCE_HEIGHT
+        self.SOURCE_MOISTURE = SOURCE_MOISTURE
+        self.NUMBER_OF_RIVERS = NUMBER_OF_RIVERS
+        self.MAX_RIVER_DISTANCE = MAX_RIVER_DISTANCE
+
+def biome_rule_args(
+        DEEP_OCEAN_LEVEL= 0.45,
+        OCEAN_LEVEL= 0.5,
+        BEACH_LEVEL= 0.51,
+        HILL_LEVEL= 0.6,
+        MOUNTAIN_LEVEL= 0.65,
+        DESERT_MOISTURE= 0.4,
+        GRASSLAND_MOISTURE= 0.5,
+        FOREST_MOISTURE= 0.55,
+        SWAMP_MOISTURE= 0.65,
+        MOUNTAINS_TEMP= 0.2,
+        SWAMP_TEMP=0.3,
+        FOREST_TEMP= 0.4,
+        GRASSLAND_TEMP= 0.5,
+        DESERT_TEMP= 0.7,
+        SOURCE_HEIGHT= 0.6,
+        SOURCE_MOISTURE= 0.55,
+        NUMBER_OF_RIVERS= 10,
+        MAX_RIVER_DISTANCE= 100):
+    
+    rules = BiomeRules(DEEP_OCEAN_LEVEL, OCEAN_LEVEL, BEACH_LEVEL, HILL_LEVEL, MOUNTAIN_LEVEL,
+                        DESERT_MOISTURE, GRASSLAND_MOISTURE, FOREST_MOISTURE, SWAMP_MOISTURE,    
+                        MOUNTAINS_TEMP, SWAMP_TEMP, FOREST_TEMP, GRASSLAND_TEMP, DESERT_TEMP,       
+                        SOURCE_HEIGHT, SOURCE_MOISTURE, NUMBER_OF_RIVERS, MAX_RIVER_DISTANCE)
+
+    return rules
+
+rules = biome_rule_args()
 
 def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_width, perlin_height, SEED):
     np.random.seed(SEED)
@@ -143,7 +174,7 @@ def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_m
 
     coords = np.transpose(np.nonzero(source_map))
     if len(coords) == 0:
-        return None
+        return None, None
     print(list(coords))
 
     random_sample_coords = np.random.choice(len(coords), rules.NUMBER_OF_RIVERS)
@@ -243,7 +274,7 @@ def find_nearest_drain(y,x, altitude_map):
             return sink_path[::-1], False # reverse path so it is from sink to drain
         
         surrounding = [[1, 0], [0, 1], [-1, 0],[0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]
-        # np.random.shuffle(surrounding) # shuffling makes rivers more jagged and therefore natural. 
+        np.random.shuffle(surrounding) # shuffling makes rivers more jagged and therefore natural. 
 
         for dy,dx in surrounding:
             ny = current_y + dy

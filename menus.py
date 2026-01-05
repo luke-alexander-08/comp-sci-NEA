@@ -9,7 +9,7 @@ from pygame_widgets.progressbar import ProgressBar
 from pygame_widgets.dropdown import Dropdown
 import numpy as np
 import os
-
+import json
 
 class Menu():
     def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen):
@@ -194,6 +194,7 @@ class MapMenu(Menu):
         self.ID = "MAP"
 
         self.map_size = (perlin_width, perlin_height)
+        self.new_map_dims = self.map_size
         self.perlin_map = perlin_map
         self.map_surf = pygame.Surface((perlin_width, perlin_height)) #
         self.scaled_surf = self.map_surf.copy()
@@ -213,18 +214,19 @@ class MapMenu(Menu):
         self.add_button(screen=screen, x= screen_width-50, y= 250, height=30, width=100, text="edit menu", passed_func=self.open_edit_menu)
 
         #edit menu
-        self.edit_menu = EditMenu(screen, 0, 0, screen_width=screen_width, screen_height=screen_height, screen_change=screen_change, back_screen=back_screen)
+        self.edit_menu = EditMenu(screen, 0, 0, screen_width=screen_width, screen_height=screen_height, screen_change=screen_change, back_screen=back_screen, perlin_width=perlin_width, perlin_height=perlin_height, conv_screen_to_map_coords=self.conv_screen_to_map_coords, conv_map_to_screen_coords=self.conv_map_to_screen_coords)
 
     def set_map_size(self, width, height):
         self.map_surf = pygame.Surface((width, height)) 
         self.map_size = (width, height) # delete line for auto-centre on small maps. 
 
     def conv_screen_to_map_coords(self, coord):
-        return (coord-self.pan_offset) * self.zoom_scale
+        return int((coord[0]-self.pan_offset[0])*self.zoom_scale), int((coord[1]-self.pan_offset[1])*self.zoom_scale)
 
     def conv_map_to_screen_coords(self, coord):
-        
-        return (coord[0]/self.zoom_scale + self.pan_offset[0], coord[1]/self.zoom_scale + self.pan_offset[1])
+        print((coord[0]-self.pan_offset[0])*self.zoom_scale), int((coord[1]-self.pan_offset[1]))
+        print(coord, "coord")
+        return int((coord[0]/self.zoom_scale) + self.pan_offset[0]), int((coord[1]/self.zoom_scale) + self.pan_offset[1])
 
 
     def set_map(self, map, imported=False): # discuss when writing up import function. 
@@ -253,6 +255,7 @@ class MapMenu(Menu):
 
     def set_pan(self, pan_offset):
         self.pan_offset -= pan_offset/self.zoom_scale
+        self.edit_menu.pan_offset = self.pan_offset
     
     def zoom_map(self, mouse_pos, direction):
         mouse_pos_before_zoom = pygame.Vector2(mouse_pos) / self.zoom_scale + self.pan_offset # finds the "world position" of mouse before any zooming.
@@ -267,9 +270,9 @@ class MapMenu(Menu):
         map_dims = pygame.Vector2(self.map_size)
         new_map_dims = map_dims * self.zoom_scale
         self.scaled_surf = pygame.transform.scale(self.map_surf, new_map_dims)
-        
         # now using old world pos can adjust so the zoomed in map is offset to the mouse position. 
         self.pan_offset = mouse_pos_before_zoom - (pygame.Vector2(mouse_pos) / self.zoom_scale)
+        self.edit_menu.zoom_canvas(self.pan_offset, new_map_dims, self.zoom_scale)
 
 
     def toggle_save_box(self):
@@ -283,7 +286,23 @@ class MapMenu(Menu):
 
     def save_map(self):
         print(self.perlin_map.shape)
-        np.save(f".\maps\{self.save_box.getText()}", self.perlin_map)
+        name = self.save_box.getText()
+        
+        structure_data = []
+        for surface, info in self.edit_menu.surface_positions.items():
+            if info["is_text"]:
+                surface_name = "label"
+            else:
+                surface_name = self.edit_menu.get_structure_id(surface)
+            print(surface_name)
+            structure_data.append({"name": surface_name,"info": info})
+            
+        json_name = "json_" + name
+        with open(f".\maps\{json_name}.json", "w") as f: 
+            json.dump(structure_data, f, indent=4)
+
+        np.save(f".\maps\{name}.npy", self.perlin_map)
+        pygame.image.save(self.edit_menu.canvas, f".\maps\canvas_{name}.png")
         self.save_box.setText("")
         self.save_box.hide()
         self.save_button.hide()
@@ -291,22 +310,44 @@ class MapMenu(Menu):
     def open_edit_menu(self):
         self.edit_menu.toggle_active()
 
+    def get_is_placing(self):
+        return self.edit_menu.is_placing()
+
+    def stop_placing(self):
+        self.edit_menu.stop_placing()
+
+    def set_edit_canvas(self, surf):
+        self.edit_menu.set_canvas(surf)
+
+    def on_open(self):
+        print(f"Now showing {self.ID} screen")
+        self.edit_menu.update_canvas()
+    
+    def import_edit_structure(self, structure_name, coord):
+        self.edit_menu.import_structure(structure_name, coord)
+
 class EditMenu(Menu):
-    def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen):
+    def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen, perlin_width, perlin_height, conv_screen_to_map_coords, conv_map_to_screen_coords):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "EDIT"
 
-        self.canvas = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+        self.conv_screen_to_map_coords, self.conv_map_to_screen_coords = conv_screen_to_map_coords, conv_map_to_screen_coords
+        # map to screen for storage, screen to map for display
+        self.canvas = pygame.Surface((perlin_width, perlin_height), pygame.SRCALPHA)
         self.canvas.fill((0,0,0,0)) # makes it transparent
+        self.scaled_canvas = self.canvas.copy()
+        self.new_map_dims = (perlin_width, perlin_height)
+        self.update_canvas()
+
         self.surface_positions = {} # store labels and their coordinates
         self.structures = {}
         self.load_structures()
-        self.structure_dropdown = Dropdown(screen, 0, 800, 100, 30, name="Select Structure", choices=list(self.structures.keys()), values = list(self.structures.keys()))
+        self.structure_dropdown = Dropdown(screen, 0, 200, 100, 30, name="Select Structure", choices=list(self.structures.keys()), values = list(self.structures.keys()))
         self.widgets.append(self.structure_dropdown)
         print(self.structures)
 
         self.add_textbox(screen, 0, 30, 100, 30, 15, text="EDIT MENU", hidden=True)
-        self.add_button(screen=screen, x= 0, y= 50, height=30, width=100, text="Label", passed_func=self.add_label)
+        self.add_button(screen=screen, x= 0, y= 50, height=30, width=100, text="Add Label", passed_func=self.add_label)
         self.add_button(screen=screen, x= 0, y= 150, height=30, width=100, text="Add Structure", passed_func=self.add_structure)
         self.add_button(screen=screen, x= 0, y= 250, height=30, width=100, text="Paint Map", passed_func=self.paint_map)
         # self.add_button(screen=screen, x= 0, y= 250, height=30, width=100, text="Carve Map", passed_func=self.add_geographical_effect)
@@ -322,6 +363,7 @@ class EditMenu(Menu):
         self.add_slider(screen, 200, 500, 100, 20, 0, 255, 1, "Red", key="red",initial=0) 
         self.add_slider(screen, 200, 600, 100, 20, 0, 255, 1, "Blue", key="blue",initial=0)
         self.add_slider(screen, 200, 700, 100, 20, 0, 255, 1, "Green", key="green",initial=0)
+        self.add_slider(screen, 350, 500, 100, 20, 1, 25, 1, "Brush Width", key="width",initial=3)
 
         self.paint_colour = (0,0,0)
 
@@ -329,6 +371,8 @@ class EditMenu(Menu):
 
         self.last_pos = None
 
+        self.zoom_scale = 1
+        self.pan_offset = pygame.Vector2()
 
     def toggle_active(self):
         if self.active:
@@ -345,30 +389,37 @@ class EditMenu(Menu):
             self.values_dict[obj.key] = obj.update() # store slider values in self dictionary. uses key identifier
 
         for label, dest in self.surface_positions.items():
-            pygame.Surface.blit(self.screen, label, dest)
+            dest = dest["pos"]
+            label_size = label.get_size()
+            scale = pygame.Vector2(label_size) *self.zoom_scale
+            scaled_label = pygame.transform.scale(label,scale)
+            pygame.Surface.blit(self.screen, scaled_label, self.conv_screen_to_map_coords(dest))
 
         if self.placing_label:
-            pygame.Surface.blit(self.screen, self.label, ((pygame.mouse.get_pos()[0])+5,(pygame.mouse.get_pos()[1])-5))
-            self.surface_positions[self.label] = ((pygame.mouse.get_pos()[0])+5, (pygame.mouse.get_pos()[1])-5)
+            pygame.Surface.blit(self.screen, self.label, self.conv_screen_to_map_coords(((pygame.mouse.get_pos()[0])+5,(pygame.mouse.get_pos()[1])-5))) # loading
+            print(self.surface_positions[self.label]["pos"], "key")
+            self.surface_positions[self.label]["pos"] = self.conv_map_to_screen_coords(((pygame.mouse.get_pos()[0])+5, (pygame.mouse.get_pos()[1])-5)) # saving
 
         if self.placing_structure:
-            pygame.Surface.blit(self.screen, self.structure, ((pygame.mouse.get_pos()[0])+5,(pygame.mouse.get_pos()[1])-5))
-            self.surface_positions[self.structure] = ((pygame.mouse.get_pos()[0])+5, (pygame.mouse.get_pos()[1])-5)
+            pygame.Surface.blit(self.screen, self.structure, self.conv_screen_to_map_coords(((pygame.mouse.get_pos()[0])+5,(pygame.mouse.get_pos()[1])-5)))
+            print(self.surface_positions[self.structure]["pos"], "key")
+            self.surface_positions[self.structure]["pos"] = self.conv_map_to_screen_coords(((pygame.mouse.get_pos()[0])+5, (pygame.mouse.get_pos()[1])-5))
 
         if self.painting:
-            self.paint_colour = tuple(self.values_dict.values()) # set colour to sliders
+            self.paint_colour = (self.values_dict["red"], self.values_dict["green"], self.values_dict["blue"]) # set colour to sliders
 
             if self.draw:
-                current_pos = pygame.mouse.get_pos()
+                current_pos = self.conv_map_to_screen_coords(pygame.mouse.get_pos())
+
                 if self.last_pos != None:
-                    pygame.draw.line(self.canvas, self.paint_colour, self.last_pos, current_pos, 5)
-                self.last_pos = current_pos
-                # self.screen.set_at(((pygame.mouse.get_pos()[0]), (pygame.mouse.get_pos()[1])), self.paint_colour)
-                print(self.draw)
+                    pygame.draw.line(self.canvas, self.paint_colour, (self.last_pos), (current_pos), width = self.values_dict["width"])
+                    self.update_canvas()
+                self.last_pos = (current_pos)
             else:
                 self.last_pos = None
 
-        self.screen.blit(self.canvas, (0,0))
+        self.panned_map_coords = ((0,0) - self.pan_offset) * self.zoom_scale
+        self.screen.blit(self.scaled_canvas, self.panned_map_coords)
 
     def load_structures(self):
         for filename in os.listdir(".\structures"):
@@ -378,25 +429,69 @@ class EditMenu(Menu):
                 image = pygame.transform.scale(image, (50,50))
 
                 self.structures[filename.split(".")[0]] = image
+
+    def get_structure_id(self, structure):
+        for name, surf in self.structures.items():
+            # direct object equality (same object)
+            if surf == structure:
+                return name
+            if pygame.image.tostring(surf, 'RGBA') == pygame.image.tostring(structure, 'RGBA'): # compare pixels directly... not great
+                return name
             
+        
+        return "label_structure"
+    
     def add_label(self):
         self.label_box = self.add_textbox(self.screen, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1], 200, 30, 15, "Enter label name", disabled=False, on_submit=self.place_label, borderThickness=0, colour=(220,0,0,120))
 
     def place_label(self):
         self.label = self.font.render(self.label_box.getText(), 1, (0,0,0))
-        self.surface_positions[self.label] = (0,0)
+        self.surface_positions[self.label] = {"pos":(0,0), "is_text":True, "text":self.label_box.getText()}
         self.label_box.hide()
         self.placing_label = True
 
     def add_structure(self): # village, city, 
         print("Structure")
         self.structure = self.structures[self.structure_dropdown.getSelected()].copy()
+        self.surface_positions[self.structure] = {"pos":pygame.Vector2(), "is_text":False, "text":None}
         self.placing_structure = True
 
+    def import_structure(self, structureID, coord):
+        structure_surf = self.structures[structureID].copy()
+        coord = coord.strip("()").split(",") 
+        coord = int(coord[0]), int(coord[1])
+        print(type(coord), coord, "struc coord")
+        self.surface_positions[structure_surf] = {"pos":pygame.Vector2(coord), "is_text":False, "text":None}
 
     def add_geographical_effect(self, geo=""):
         print("Geography")
 
     def paint_map(self):
-        [slider.show() for slider in self.sliders]
-        self.painting = True
+        if self.painting:
+            [slider.hide() for slider in self.sliders]
+            self.painting = False
+            self.draw = False
+        else:
+            [slider.show() for slider in self.sliders]
+            self.painting = True
+
+    
+    def is_placing(self):
+        return (self.placing_label or self.placing_structure)
+    
+    def stop_placing(self):
+        self.placing_label = False
+        self.placing_structure = False
+    
+    def zoom_canvas(self, pan_offset, new_map_dims, zoom):
+        print("Updated edit, ", pan_offset, zoom, new_map_dims)
+        self.scaled_canvas = pygame.transform.scale(self.canvas, new_map_dims)
+        self.new_map_dims = new_map_dims
+        self.pan_offset = pan_offset
+        self.zoom_scale = zoom
+
+    def update_canvas(self):
+        self.scaled_canvas = pygame.transform.scale(self.canvas, self.new_map_dims)
+
+    def set_canvas(self, surf):
+        self.canvas = surf
