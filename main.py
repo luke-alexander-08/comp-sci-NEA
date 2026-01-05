@@ -239,6 +239,8 @@ class Program():
         self.map_array = np.load(f"./maps/{map_file}.npy")
         try:
             map_canvas = pygame.image.load(f"./maps/canvas_{map_file}.png")
+            self.windows["MAP"].set_edit_canvas(map_canvas)
+
             print(f"C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_{map_file}.json"== "C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_test_32.json")
             with open(f"C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_{map_file}.json", "r") as file:
                 structure_json = json.load(file)
@@ -252,10 +254,6 @@ class Program():
         self.map_array.transpose()
         print(self.map_array)
         shape = self.map_array.shape
-
-
-
-        self.windows["MAP"].set_edit_canvas(map_canvas)
         
         self.windows["MAP"].set_map_size(shape[0], shape[1])
         print(self.map_array.ndim)

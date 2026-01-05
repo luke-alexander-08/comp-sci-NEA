@@ -145,8 +145,8 @@ class ImportMenu(Menu):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "IMPORT"
         self.import_func = import_map
-        self.import_box = self.add_textbox(screen=screen, x=100, y=100, height=100, width=200, fontsize=50, text="Enter file name: ", disabled=False, on_submit=self.callback)
-        self.add_button(screen=screen, x= 50, y= 100, height=30, width=100, text="load", passed_func=lambda: self.callback())
+        self.import_box = self.add_textbox(screen=screen, x=100, y=100, height=100, width=400, fontsize=50, text="Enter file name: ", disabled=False, on_submit=self.callback)
+        self.add_button(screen=screen, x= 500, y= 100, height=100, width=100, text="load", passed_func=lambda: self.callback())
         # self.add_button(screen=screen, x= 100, y=150, width=200, height=50, text="Import", passed_func=lambda: print("button"))
 
     def callback(self):
@@ -202,8 +202,8 @@ class MapMenu(Menu):
         self.add_button(screen=screen, x= screen_width-50, y= 100, height=30, width=100, text="view libs", passed_func=view_libs)
         self.add_button(screen=screen, x= screen_width-50, y= 200, height=30, width=100, text="save", passed_func=self.toggle_save_box)
 
-        self.save_box = self.add_textbox(screen=screen, x=250, y=550, height=100, width=200, fontsize=50, text="Enter file name: ", disabled=False, hidden=True, independent=True)
-        self.save_button = self.add_button(screen=screen, x= 450, y= 550, height=100, width=100, text="save", passed_func=self.save_map, hidden=True, independent = True)
+        self.save_box = self.add_textbox(screen=screen, x=250, y=550, height=100, width=400, fontsize=50, text="Enter file name: ", disabled=False, hidden=True, independent=True)
+        self.save_button = self.add_button(screen=screen, x= 650, y= 550, height=100, width=100, text="save", passed_func=self.save_map, hidden=True, independent = True)
      
         self.mouse_pos_before_zoom = pygame.Vector2()
         self.zoom_scale = 1
@@ -433,13 +433,10 @@ class EditMenu(Menu):
     def get_structure_id(self, structure):
         for name, surf in self.structures.items():
             # direct object equality (same object)
-            if surf == structure:
-                return name
             if pygame.image.tostring(surf, 'RGBA') == pygame.image.tostring(structure, 'RGBA'): # compare pixels directly... not great
                 return name
             
         
-        return "label_structure"
     
     def add_label(self):
         self.label_box = self.add_textbox(self.screen, pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1], 200, 30, 15, "Enter label name", disabled=False, on_submit=self.place_label, borderThickness=0, colour=(220,0,0,120))

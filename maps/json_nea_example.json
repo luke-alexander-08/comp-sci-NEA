@@ -1,0 +1,46 @@
+[
+    {
+        "name": "Camp",
+        "info": {
+            "pos": [
+                108,
+                344
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "House",
+        "info": {
+            "pos": [
+                538,
+                230
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "label",
+        "info": {
+            "pos": [
+                513,
+                291
+            ],
+            "is_text": true,
+            "text": "Meebus' Lodging"
+        }
+    },
+    {
+        "name": "label",
+        "info": {
+            "pos": [
+                158,
+                347
+            ],
+            "is_text": true,
+            "text": "Camp Oob"
+        }
+    }
+]

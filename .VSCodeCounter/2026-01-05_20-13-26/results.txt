@@ -1,0 +1,48 @@
+Date : 2026-01-05 20:13:26
+Directory : c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project
+Total : 18 files,  1398 codes, 168 comments, 426 blanks, all 1992 lines
+
+Languages
++------------------+------------+------------+------------+------------+------------+
+| language         | files      | code       | comment    | blank      | total      |
++------------------+------------+------------+------------+------------+------------+
+| Python           |         12 |      1,228 |        168 |        426 |      1,822 |
+| JSON             |          4 |        155 |          0 |          0 |        155 |
+| pip requirements |          1 |         14 |          0 |          0 |         14 |
+| Markdown         |          1 |          1 |          0 |          0 |          1 |
++------------------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                   |         18 |      1,398 |        168 |        426 |      1,992 |
+| . (Files)                                                                                                           |          8 |        938 |        120 |        279 |      1,337 |
+| maps                                                                                                                |          4 |        155 |          0 |          0 |        155 |
+| old                                                                                                                 |          6 |        305 |         48 |        147 |        500 |
++---------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| filename                                                                                                            | language         | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\README.md                     | Markdown         |          1 |          0 |          0 |          1 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\main.py                       | Python           |        213 |         25 |         64 |        302 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\maps\json_test_26.json        | JSON             |          6 |          0 |          0 |          6 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\maps\json_test_31.json        | JSON             |         57 |          0 |          0 |         57 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\maps\json_test_32.json        | JSON             |         57 |          0 |          0 |         57 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\maps\json_test_33.json        | JSON             |         35 |          0 |          0 |         35 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\menus.py                      | Python           |        373 |         16 |        110 |        499 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\old\hashingspeedtest.py       | Python           |         40 |          3 |         20 |         63 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\old\new_main_testing_state.py | Python           |        105 |         17 |         41 |        163 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\old\oldmain.py                | Python           |         82 |         25 |         47 |        154 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\old\perlinNoiseold.py         | Python           |         61 |          1 |         28 |         90 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\old\perlinspeedtest.py        | Python           |          5 |          2 |          6 |         13 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\old\popupbox.py               | Python           |         12 |          0 |          5 |         17 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\perlinNoise.py                | Python           |         53 |          6 |         20 |         79 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\perlin_mapping.py             | Python           |        222 |         49 |         52 |        323 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\requirements.txt              | pip requirements |         14 |          0 |          0 |         14 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\slider.py                     | Python           |         40 |         23 |         24 |         87 |
+| c:\Users\lukew\OneDrive - Spencer Academies Trust\VS-code\python projects\NEA Project\test.py                       | Python           |         22 |          1 |          9 |         32 |
+| Total                                                                                                               |                  |      1,398 |        168 |        426 |      1,992 |
++---------------------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
