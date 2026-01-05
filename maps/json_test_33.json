@@ -1,0 +1,35 @@
+[
+    {
+        "name": "Camp",
+        "info": {
+            "pos": [
+                332,
+                260
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "House",
+        "info": {
+            "pos": [
+                484,
+                290
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "Ship",
+        "info": {
+            "pos": [
+                627,
+                289
+            ],
+            "is_text": false,
+            "text": null
+        }
+    }
+]

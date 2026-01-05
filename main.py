@@ -238,16 +238,17 @@ class Program():
     def import_map(self, map_file): # the issue is that not all 3 maps are saved maybe? 
         self.map_array = np.load(f"./maps/{map_file}.npy")
         try:
-            map_canvas = pygame.image.load(f".\maps\canvas_{map_file}.png")
-            with open(f".\maps\json_{map_file}.json", "r") as file:
+            map_canvas = pygame.image.load(f"./maps/canvas_{map_file}.png")
+            print(f"C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_{map_file}.json"== "C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_test_32.json")
+            with open(f"C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_{map_file}.json", "r") as file:
                 structure_json = json.load(file)
                 print(structure_json)
+
                 for structure_info in structure_json:
-                    structure, info = structure_info.split(":")
-                    self.windows["MAP"].import_edit_structure(structure, info)
+                    self.windows["MAP"].import_edit_structure(structure_info)
         except Exception as e:
             print("Old map")
-            print(e)
+            print(e, "exp")
         self.map_array.transpose()
         print(self.map_array)
         shape = self.map_array.shape

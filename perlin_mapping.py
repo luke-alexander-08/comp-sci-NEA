@@ -110,7 +110,7 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
     #need to mask
     #start by assigning biome map to all sea. then move on from there. assigning heights first then moving onto to override into other biomes. slowly build up layers. 
     biome_map = np.full_like(altitude_map, rules.DEEP_OCEAN_ID, dtype=np.uint8) # restricts values to 8 bit integers which is probably more efficient
-    paths, flow_map = calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_map)
+    paths, flow_map = calculate_river_sources(altitude_map, moisture_map)
 
     # create maps then overlay them onto the biome mapnoise
     ocean_mask = altitude_map >= rules.DEEP_OCEAN_LEVEL
@@ -164,12 +164,11 @@ def noise_map_to_biome_map(altitude_map, moisture_map, temperature_map, perlin_w
 
     return map_array, biome_map.transpose(), flow_map
 
-def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_map):
-    height_mask = altitude_map >= rules.SOURCE_HEIGHT
+def calculate_river_sources(altitude_map, moisture_map):
+    height_mask = altitude_map >= rules.SOURCE_HEIGHT # find sources
     moisture_mask = moisture_map >= rules.SOURCE_MOISTURE
-    flow_map = np.zeros_like(altitude_map)
     unaltered_altitude = altitude_map.copy()
-    source_map = np.full_like(altitude_map, False, dtype=np.uint8) # Set all values to false initially
+    source_map = np.full_like(altitude_map, False, dtype=np.uint8) # set all values to false initially
     source_map[height_mask & moisture_mask] = True
 
     coords = np.transpose(np.nonzero(source_map))
@@ -180,7 +179,8 @@ def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_m
     random_sample_coords = np.random.choice(len(coords), rules.NUMBER_OF_RIVERS)
 
     random_coords = coords[random_sample_coords]
-
+    
+    flow_map = np.zeros_like(altitude_map)
     paths = []
     for y,x in random_coords:
         path = calculate_river_flow(unaltered_altitude, coord = [y,x], original_altitude=altitude_map)
@@ -190,12 +190,11 @@ def calculate_river_sources(altitude_map, moisture_map, temperature_map, biome_m
             flow_map[y,x] += 1
         paths.append(path)
 
-    print(np.max(flow_map), "max")
     
     for path in paths:
         for i, river_tile in enumerate(path):
             flow = flow_map[river_tile[0], river_tile[1]]
-            carve_map([river_tile], altitude_map, strength=0.01*flow, radius=int(np.sqrt(2*(flow+i))))
+            carve_map([river_tile], altitude_map, strength=0.02*flow, radius=int(np.sqrt(2*(flow+i))))
 
     return paths, flow_map
     
@@ -246,24 +245,18 @@ def find_nearest_drain(y,x, altitude_map):
     starting_altitude = altitude_map[y,x]
 
     search_queue = deque([(y,x)])
-    visited = {(y,x): None} # dictionary storing each pos and the pos behind it, used for backtracking
+    visited = {(y,x): None} # dictionary storing each pos and the pos behind it, for backtracking
     distance_away = None
     while search_queue: 
-        # print(search_queue)
-        # print(search_queue.popleft())
         current_y, current_x = search_queue.popleft()
-        # print("Popped!")
         distance_away = ((x- current_x)**2 + (y - current_y)**2)**0.5
         if distance_away > rules.MAX_RIVER_DISTANCE:
             return distance_away, True
         if altitude_map[current_y, current_x] < starting_altitude: 
             # drain found
-            print("Found Drain! at ", (current_x,current_y))
             sink_path = []
             while True:
                 print(current_y, current_x)
-                # print(visited, "visited")
-                # print(current_y, current_x)
                 parent = visited[(current_y, current_x)]
                 if parent != None:
                     sink_path.append((current_y, current_x))

@@ -323,8 +323,8 @@ class MapMenu(Menu):
         print(f"Now showing {self.ID} screen")
         self.edit_menu.update_canvas()
     
-    def import_edit_structure(self, structure_name, coord):
-        self.edit_menu.import_structure(structure_name, coord)
+    def import_edit_structure(self, info):
+        self.edit_menu.import_structure(info)
 
 class EditMenu(Menu):
     def __init__(self, screen, x, y, screen_width, screen_height, screen_change, back_screen, perlin_width, perlin_height, conv_screen_to_map_coords, conv_map_to_screen_coords):
@@ -456,12 +456,14 @@ class EditMenu(Menu):
         self.surface_positions[self.structure] = {"pos":pygame.Vector2(), "is_text":False, "text":None}
         self.placing_structure = True
 
-    def import_structure(self, structureID, coord):
-        structure_surf = self.structures[structureID].copy()
-        coord = coord.strip("()").split(",") 
-        coord = int(coord[0]), int(coord[1])
-        print(type(coord), coord, "struc coord")
-        self.surface_positions[structure_surf] = {"pos":pygame.Vector2(coord), "is_text":False, "text":None}
+    def import_structure(self, info):
+        print(info, "info")
+        if info["info"]["is_text"]:
+            self.label = self.font.render(self.label_box.getText(), 1, (0,0,0))
+            self.surface_positions[self.label] = info["info"]
+        else:
+            structure_surf = self.structures[info["name"]].copy()
+            self.surface_positions[structure_surf] = info["info"]
 
     def add_geographical_effect(self, geo=""):
         print("Geography")
