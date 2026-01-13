@@ -1,0 +1,24 @@
+[
+    {
+        "name": "House",
+        "info": {
+            "pos": [
+                169,
+                -15
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "label",
+        "info": {
+            "pos": [
+                131,
+                -1
+            ],
+            "is_text": true,
+            "text": "Edward's domain"
+        }
+    }
+]

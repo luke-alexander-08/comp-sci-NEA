@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import time
 start = time.time()
 SEED = 0
@@ -23,7 +22,8 @@ def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5,
     x /= width # scales x and y coordinates to 0->1 range
     y /= height
     for current_octave in range(octaves):
-        perlin_progress(octaves, current_octave+1) # sends back algorithm progress to main program
+        if perlin_progress:
+            perlin_progress(octaves, current_octave+1) # sends back algorithm progress to main program
         scaled_x = x * frequency # changes the range of noise sampled
         scaled_y = y* frequency 
 
@@ -74,6 +74,6 @@ def perlin(width, height, octaves =1, frequency=1, amplitude=1, persistence=0.5,
 
         amplitude *= persistence # persistence controls the effect each octave has
         frequency *= lacunarity # lacunarity changes how obvious small scale details are. 
-        game_loop() # run an iteration of the gameloop to update the progress bar. 
-
+        if game_loop:
+            game_loop() # run an iteration of the gameloop to update the progress bar.
     return total_noise / max_amplitude

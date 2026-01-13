@@ -1,13 +1,13 @@
-from perlinNoise import perlin
-import matplotlib.pyplot as plt
+import numpy as np
 import pygame
+import pygame.surfarray
+from perlinNoise import perlin
 from slider import LabeledSlider
 import pygame_widgets
 from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
 from pygame_widgets.progressbar import ProgressBar
 from pygame_widgets.dropdown import Dropdown
-import numpy as np
 import os
 import json
 
@@ -145,8 +145,9 @@ class ImportMenu(Menu):
         super().__init__(screen, x, y, screen_width, screen_height, screen_change, back_screen)
         self.ID = "IMPORT"
         self.import_func = import_map
-        self.import_box = self.add_textbox(screen=screen, x=100, y=100, height=100, width=400, fontsize=50, text="Enter file name: ", disabled=False, on_submit=self.callback)
-        self.add_button(screen=screen, x= 500, y= 100, height=100, width=100, text="load", passed_func=lambda: self.callback())
+        self.add_textbox(screen=screen, x=100, y=0, height=100, width=400, fontsize=50, text="Enter file name: ")
+        self.import_box = self.add_textbox(screen=screen, x=100, y=100, height=100, width=400, fontsize=50, setText="Enter file name: ", disabled=False, on_submit=self.callback)
+        self.add_button(screen=screen, x= 500, y= 100, height=100, width=100, text="load", passed_func=self.callback)
         # self.add_button(screen=screen, x= 100, y=150, width=200, height=50, text="Import", passed_func=lambda: print("button"))
 
     def callback(self):
@@ -154,6 +155,11 @@ class ImportMenu(Menu):
         
     def on_open(self):
         print(f"Now showing {self.ID} screen")
+        # ensure textbox is enabled and cleared when opening
+        # try:
+        #     self.import_box.enable()
+        # except Exception:
+        #     pass
         self.import_box.setText("")
 
 class HelpMenu(Menu):
@@ -202,9 +208,9 @@ class MapMenu(Menu):
         self.add_button(screen=screen, x= screen_width-50, y= 100, height=30, width=100, text="view libs", passed_func=view_libs)
         self.add_button(screen=screen, x= screen_width-50, y= 200, height=30, width=100, text="save", passed_func=self.toggle_save_box)
 
-        self.save_box = self.add_textbox(screen=screen, x=250, y=550, height=100, width=400, fontsize=50, text="Enter file name: ", disabled=False, hidden=True, independent=True)
-        self.save_button = self.add_button(screen=screen, x= 650, y= 550, height=100, width=100, text="save", passed_func=self.save_map, hidden=True, independent = True)
-     
+        self.save_box = self.add_textbox(screen=screen, x=250, y=550, height=100, width=400, fontsize=50, setText="", disabled=False, hidden=True, independent=True)
+        self.save_button = self.add_button(screen=screen, x= 650, y= 550, height=100, width=100, text="Save File", passed_func=self.save_map, hidden=True, independent = True)
+
         self.mouse_pos_before_zoom = pygame.Vector2()
         self.zoom_scale = 1
 
@@ -422,9 +428,9 @@ class EditMenu(Menu):
         self.screen.blit(self.scaled_canvas, self.panned_map_coords)
 
     def load_structures(self):
-        for filename in os.listdir(".\structures"):
+        for filename in os.listdir("./structures"):
             if filename.endswith(".png"):
-                filepath = os.path.join(".\structures", filename)
+                filepath = os.path.join("./structures", filename)
                 image = pygame.image.load(filepath).convert_alpha() 
                 image = pygame.transform.scale(image, (50,50))
 

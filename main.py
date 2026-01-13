@@ -1,6 +1,8 @@
-from perlinNoise import perlin
-import matplotlib.pyplot as plt
+
+
 import pygame
+import numpy as np
+from perlinNoise import perlin
 from slider import LabeledSlider
 from menus import Menu, GenerationMenu, WelcomeMenu, HelpMenu, MapMenu, ImportMenu, LoadingMenu
 import json
@@ -9,8 +11,10 @@ from pygame_widgets.textbox import TextBox
 from pygame_widgets.button import Button
 from perlin_mapping import noise_map_to_biome_map, rules
 from pygame_widgets.progressbar import ProgressBar
+import os
+import io
+import asyncio
 
-import numpy as np
 # best way to implement this into pygame. 
 # want to be able to edit the map in the future? 
 # pixel by pixel storage of colours? -
@@ -69,18 +73,20 @@ class Program():
 
 
         # self.current_window = self.windows["GENERATION"]
-        self.current_window.show_self()
-
         for val in self.windows.values():
-            val.hide_self()
+            if val is not self.current_window:
+                val.hide_self()
+
+        self.current_window.show_self()
 
         self.running = True
 
-        print(self.current_window.get_ID())
+        print("program started:", self.current_window.get_ID())
 
 
     def run(self):
-        if self.run:            
+        # print("run called is running:", self.running)
+        if self.running:            
             self.screen.fill((255,255,255))
 
             self.events = pygame.event.get()
@@ -108,7 +114,6 @@ class Program():
                     if event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0] and self.current_window.edit_menu.painting:
                         self.current_window.edit_menu.draw = True
                         print("Down")
-                    
                     if event.type == pygame.MOUSEBUTTONUP and not pygame.mouse.get_pressed()[0] and self.current_window.edit_menu.painting:
                         self.current_window.edit_menu.draw = False
                         print("Up")
@@ -236,13 +241,19 @@ class Program():
         self.screen_change("MAP")
         
     def import_map(self, map_file): # the issue is that not all 3 maps are saved maybe? 
-        self.map_array = np.load(f"./maps/{map_file}.npy")
+        print("Called import map")
+
+        path = f"maps/{map_file}.npy" 
+        print(f"Checking {path}: {os.path.exists(path)}")   
+        with open(path, "rb") as f:
+            data = f.read()
+        self.map_array = np.load(io.BytesIO(data))
         try:
             map_canvas = pygame.image.load(f"./maps/canvas_{map_file}.png")
             self.windows["MAP"].set_edit_canvas(map_canvas)
 
             print(f"C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_{map_file}.json"== "C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_test_32.json")
-            with open(f"C:/Users/lukew/OneDrive - Spencer Academies Trust/VS-code/python projects/NEA Project/maps/json_{map_file}.json", "r") as file:
+            with open(f"./maps/json_{map_file}.json", "r") as file:
                 structure_json = json.load(file)
                 print(structure_json)
 
@@ -254,7 +265,7 @@ class Program():
         self.map_array.transpose()
         print(self.map_array)
         shape = self.map_array.shape
-        
+
         self.windows["MAP"].set_map_size(shape[0], shape[1])
         print(self.map_array.ndim)
         self.windows["MAP"].set_map(self.map_array, imported=True)
@@ -262,38 +273,44 @@ class Program():
         self.screen_change("MAP") 
 
     def view_libs(self):
-        plt.figure(figsize=(10,8))
-        plt.imshow(self.altitude_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
-        plt.colorbar(label='Noise Value')
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.title("Altitude")
-        plt.show()
+        # plt.figure(figsize=(10,8))
+        # plt.imshow(self.altitude_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
+        # plt.colorbar(label='Noise Value')
+        # plt.xlabel("X")
+        # plt.ylabel("Y")
+        # plt.title("Altitude")
+        # plt.show()
 
-        plt.figure(figsize=(10,8))
-        plt.imshow(self.moisture_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
-        plt.colorbar(label='Noise Value')
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.title("Moisture")
-        plt.show()
+        # plt.figure(figsize=(10,8))
+        # plt.imshow(self.moisture_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
+        # plt.colorbar(label='Noise Value')
+        # plt.xlabel("X")
+        # plt.ylabel("Y")
+        # plt.title("Moisture")
+        # plt.show()
     
-        plt.figure(figsize=(10,8))
-        plt.imshow(self.temperature_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
-        plt.colorbar(label='Noise Value')
-        plt.xlabel("X")
-        plt.ylabel("Y")
-        plt.title("Temperature")
-        plt.show()
-     
+        # plt.figure(figsize=(10,8))
+        # plt.imshow(self.temperature_map, cmap="viridis", origin="lower", vmin=0, vmax=1.0)
+        # plt.colorbar(label='Noise Value')
+        # plt.xlabel("X")
+        # plt.ylabel("Y")
+        # plt.title("Temperature")
+        # plt.show()
+        pass     
 
+print(" Program instance")
 pmain = Program()
 
 
 # 12/10/2025 - currently at the point of implementing screens. need to create a welcome menu screen and implement true/false switching within the program class. then work on page nav & adding a perlin function into the program classs. 
 # 17/10/2025 - sorted screen functionality, can move back and forth use buttons etc. Next step is to work on layering multiple maps generated. 
-#run loop
-while pmain.running:
-    pmain.run()
-    
+# run loop (async-friendly for pygbag)
+async def main_loop():
+    print(" async main loop")
+    while pmain.running:
+        await asyncio.sleep(0)
+        pmain.run()
+
+asyncio.run(main_loop())
+
 

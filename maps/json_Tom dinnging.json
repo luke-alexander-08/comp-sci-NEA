@@ -1,0 +1,57 @@
+[
+    {
+        "name": "Ship",
+        "info": {
+            "pos": [
+                180,
+                237
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "Ship",
+        "info": {
+            "pos": [
+                201,
+                117
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "Ship",
+        "info": {
+            "pos": [
+                133,
+                385
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "Ship",
+        "info": {
+            "pos": [
+                329,
+                138
+            ],
+            "is_text": false,
+            "text": null
+        }
+    },
+    {
+        "name": "House",
+        "info": {
+            "pos": [
+                613,
+                407
+            ],
+            "is_text": false,
+            "text": null
+        }
+    }
+]
